@@ -52,8 +52,18 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
 
   rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.5),
+  zoomLevel(1.0), zoomSpeed(0.0),
+
+  position(0, 0, -5), movement(0, 0, 0), speed(0, 0, 0),
+
   brightness_slider_(nullptr), is_playing_(true),
-  use_brightness_heuristic_(true) {}
+  use_brightness_heuristic_(true) {
+
+
+  // FIXME: we might not want to be the only focused thing :/
+  setFocusPolicy(Qt::StrongFocus);
+
+}
 
 
 
@@ -234,40 +244,86 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
   } else {
     c_cyl -= 0.01;
   }
+
   if (shape_ == EVisualisationShape::SPHERE) {
     c_sph += 0.01;
   } else {
     c_sph -= 0.01;
   }
+
+  if (mode_ == EVisualisationMode::LAYERED_DIGRAM) {
+    c_pos += 0.01;
+  } else {
+    c_pos -= 0.01;
+  }
+
   if (c_cyl > 1) c_cyl = 1;
   if (c_cyl < 0) c_cyl = 0;
   if (c_sph > 1) c_sph = 1;
   if (c_sph < 0) c_sph = 0;
+  if (c_pos > 1) c_pos = 1;
+  if (c_pos < 0) c_pos = 0;
 
-  if (mode_ == EVisualisationMode::LAYERED_DIGRAM && c_pos < 1) {
-    c_pos += 0.01;
-    if (c_pos > 1) c_pos = 1;
-  }
-  if (mode_ != EVisualisationMode::LAYERED_DIGRAM && c_pos) {
-    c_pos -= 0.01;
-    if (c_pos < 0) c_pos = 0;
-  }
-
+  // Rotation & zoom speed
 
   if (!is_playing_) {
     // Decrease angular speed (friction)
     angularSpeed *= 0.90;
   }
 
-  // Stop rotation when speed goes below threshold
   if (angularSpeed < 0.01) {
+    // Stop rotation when speed goes below threshold
     angularSpeed = 0.0;
   } else {
     // Update rotation
     rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
   }
 
+  if (zoomSpeed < 0.01 && zoomSpeed > -0.01) {
+    zoomSpeed = 0.0;
+  } else {
+    zoomLevel += zoomSpeed * 0.01 * zoomLevel;
+  }
+
+  if ((zoomLevel > 1000 && zoomSpeed > 0) || (zoomLevel < 0.5 && zoomSpeed < 0)) {
+    zoomSpeed = -zoomSpeed;
+  }
+
+  zoomSpeed *= 0.90;
+
+  // movement speed
+
+  speed += movement;
+
+  if (speed.x() > -0.01 && 0.01 > speed.x()) {
+    speed.setX(0);
+  }
+
+  if (speed.y() > -0.01 && 0.01 > speed.y()) {
+    speed.setY(0);
+  }
+
+  if (speed.z() > -0.01 && 0.01 > speed.z()) {
+    speed.setZ(0);
+  }
+
+  if (position.x() < -1.5*zoomLevel || position.x() > 1.5*zoomLevel) {
+    speed.setX(-speed.x());
+  }
+
+  if (position.y() < -1.5*zoomLevel || position.y() > 1.5*zoomLevel) {
+    speed.setY(-speed.y());
+  }
+
+  if (position.z() < -5 * 5*zoomLevel || position.z() > 0) {
+    speed.setZ(-speed.z());
+  }
+
+  position += speed * 0.01;
+  speed *= 0.90;
+
   // Request an update
+  // TODO: only if something is changing.
   update();
 }
 
@@ -361,17 +417,83 @@ void TrigramWidget::focusOutEvent(QFocusEvent *event)
   // setCursor(Qt::ArrowCursor);
 }
 
+void TrigramWidget::keyPressEvent(QKeyEvent *event)
+{
+
+
+  if (event->key() == Qt::Key_A) {
+    movement.setX(1);
+  }
+
+  if (event->key() == Qt::Key_D) {
+    movement.setX(-1);
+  }
+
+  if (event->key() == Qt::Key_W) {
+    movement.setY(-1);
+  }
+
+  if (event->key() == Qt::Key_S) {
+    movement.setY(1);
+  }
+
+  if (event->key() == Qt::Key_Q) {
+    movement.setZ(-1);
+  }
+
+  if (event->key() == Qt::Key_E) {
+    movement.setZ(1);
+  }
+
+
+}
+
+
+void TrigramWidget::keyReleaseEvent(QKeyEvent *event)
+{
+
+
+  if (event->key() == Qt::Key_D && movement.x() < 0) {
+    movement.setX(0);
+  }
+
+  if (event->key() == Qt::Key_A && movement.x() > 0) {
+    movement.setX(0);
+  }
+
+
+  if (event->key() == Qt::Key_W && movement.y() < 0) {
+    movement.setY(0);
+  }
+
+  if (event->key() == Qt::Key_S && movement.y() > 0) {
+    movement.setY(0);
+  }
+
+
+  if (event->key() == Qt::Key_Q && movement.z() < 0) {
+    movement.setZ(0);
+  }
+
+  if (event->key() == Qt::Key_E && movement.z() > 0) {
+    movement.setZ(0);
+  }
+
+
+}
+
+
 void TrigramWidget::mousePressEvent(QMouseEvent *event)
 {
   // Save mouse press position
   mousePressPosition = QVector2D(event->localPos());
 
-  qDebug() << "buttons" << event->buttons();
   if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
     qDebug() << "changing play";
     playPause();
   }
 
+  angularSpeed = 0;
 }
 
 void TrigramWidget::mouseMoveEvent(QMouseEvent *event)
@@ -412,7 +534,7 @@ void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
     QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
 
     // Accelerate angular speed relative to the length of the mouse sweep
-    qreal acc = 0.1 * (diff.length() * diff.length()) / qSqrt(width * width + height * height);
+    qreal acc = (diff.length() * diff.length()) / qSqrt(width * width + height * height);
 
 
     if (acc != 0) {
@@ -422,6 +544,9 @@ void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
 
 }
 
+void TrigramWidget::wheelEvent(QWheelEvent *event) {
+  zoomSpeed += (event->delta() / 8) / 15;
+}
 
 void TrigramWidget::paintGL() {
 
@@ -447,9 +572,10 @@ void TrigramWidget::paintGL() {
 
   // Calculate model view transformation
   QMatrix4x4 matrix;
-  matrix.translate(0.0, 0.0, -5.0);
-  matrix.rotate(rotation);
 
+  matrix.translate(position);
+  matrix.rotate(rotation);
+  matrix.scale(zoomLevel);
 
   // projection matrices.
   program.setUniformValue("xfrm", perspective * matrix);

@@ -66,11 +66,14 @@ class TrigramWidget : public VisualisationWidget {
   void focusInEvent(QFocusEvent *) override;
   void focusOutEvent(QFocusEvent *) override;
 
+  void keyPressEvent(QKeyEvent *) override;
+  void keyReleaseEvent(QKeyEvent *) override;
 
   //void mouseMoveEvent(QMouseEvent *) override;
   void mousePressEvent(QMouseEvent *) override;
   void mouseMoveEvent(QMouseEvent *) override;
   void mouseReleaseEvent(QMouseEvent *) override;
+  void wheelEvent(QWheelEvent *) override;
 
   void paintGL() override;
 
@@ -106,7 +109,11 @@ class TrigramWidget : public VisualisationWidget {
   QQuaternion rotation;
   QVector3D rotationAxis;
   float angularSpeed;
+  float zoomLevel;
+  float zoomSpeed;
   QVector2D mousePressPosition;
+
+  QVector3D position, movement, speed;
 
   QPushButton *pause_button_, *cube_button_, *cylinder_button_, *sphere_button_;
   QSlider *brightness_slider_;
