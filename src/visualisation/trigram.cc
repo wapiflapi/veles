@@ -23,6 +23,9 @@
 #include <functional>
 #include <vector>
 
+#include <QDebug>
+#include <QtMath>
+
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
@@ -44,11 +47,15 @@ const int k_brightness_heuristic_max = 66;
 const double k_brightness_heuristic_scaling = 2.5;
 
 TrigramWidget::TrigramWidget(QWidget *parent) :
-  VisualisationWidget(parent), angle(0), c_sph(0), c_cyl(0), c_pos(0),
+  VisualisationWidget(parent), c_sph(0), c_cyl(0), c_pos(0),
   shape_(EVisualisationShape::CUBE), mode_(EVisualisationMode::TRIGRAM),
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
+
+  rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.5),
   brightness_slider_(nullptr), is_playing_(true),
   use_brightness_heuristic_(true) {}
+
+
 
 TrigramWidget::~TrigramWidget() {
   makeCurrent();
@@ -218,9 +225,9 @@ void TrigramWidget::autoSetBrightness() {
 }
 
 void TrigramWidget::timerEvent(QTimerEvent *e) {
-  if (is_playing_) {
-    angle += 0.5f;
-  }
+
+  // neat trick here to transform towards projections,
+  // always move towards it, fix later if we went to far.
 
   if (shape_ == EVisualisationShape::CYLINDER) {
     c_cyl += 0.01;
@@ -245,11 +252,30 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
     c_pos -= 0.01;
     if (c_pos < 0) c_pos = 0;
   }
+
+
+  if (!is_playing_) {
+    // Decrease angular speed (friction)
+    angularSpeed *= 0.90;
+  }
+
+  // Stop rotation when speed goes below threshold
+  if (angularSpeed < 0.01) {
+    angularSpeed = 0.0;
+  } else {
+    // Update rotation
+    rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
+  }
+
+  // Request an update
   update();
 }
 
 void TrigramWidget::initializeVisualisationGL() {
   initializeOpenGLFunctions();
+
+  setMouseTracking(true);
+
 
   glClearColor(0, 0, 0, 1);
 
@@ -277,7 +303,7 @@ void TrigramWidget::initShaders() {
   timer.start(12, this);
 }
 
-void TrigramWidget::initTextures() {
+  void TrigramWidget::initTextures() {
   int size = getDataSize();
   const uint8_t *data = reinterpret_cast<const uint8_t*>(getData());
 
@@ -295,49 +321,145 @@ void TrigramWidget::initTextures() {
   glTexBuffer(GL_TEXTURE_BUFFER, QOpenGLTexture::R8U, databuf->bufferId());
 }
 
-void TrigramWidget::initGeometry() {
+void TrigramWidget::initGeometry()
+{
   vao.create();
 }
 
-void TrigramWidget::resizeGL(int w, int h) {
+void TrigramWidget::resizeGL(int w, int h)
+{
   width = w;
   height = h;
+
+  // Re-init our perspective.
+
+  perspective.setToIdentity();
+  if (width > height) {
+    perspective.perspective(45, static_cast<double>(width) / height, 0.01f, 100.0f);
+  } else {
+    // wtf h4x.  gluPerspective fixes the viewport wrt y field of view, and
+    // we need to fix it to x instead.  So, rotate the world, fix to new y,
+    // rotate it back.
+    perspective.rotate(90, 0, 0, 1);
+    perspective.perspective(45, static_cast<double>(height) / width, 0.01f, 100.0f);
+    perspective.rotate(-90, 0, 0, 1);
+  }
+
 }
 
+void TrigramWidget::focusInEvent(QFocusEvent *event)
+{
+  qDebug() << "focus in" << event;
+  // setCursor(Qt::BlankCursor);
+  // QCursor::setPos(mapToGlobal(QPoint(width / 2, height / 2)));
+}
+
+void TrigramWidget::focusOutEvent(QFocusEvent *event)
+{
+  qDebug() << "focus out" << event;
+  // QCursor::setPos(mapToGlobal(QPoint(width / 2, height / 2)));
+  // setCursor(Qt::ArrowCursor);
+}
+
+void TrigramWidget::mousePressEvent(QMouseEvent *event)
+{
+  // Save mouse press position
+  mousePressPosition = QVector2D(event->localPos());
+
+  qDebug() << "buttons" << event->buttons();
+  if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
+    qDebug() << "changing play";
+    playPause();
+  }
+
+}
+
+void TrigramWidget::mouseMoveEvent(QMouseEvent *event)
+{
+
+  if (!(event->buttons() & Qt::LeftButton)) {
+    return;
+  }
+
+  // Mouse release position - mouse press position
+  QVector2D diff = QVector2D(event->localPos()) - mousePressPosition;
+
+  // Rotation axis is perpendicular to the mouse position difference
+  // vector
+  QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
+
+  // Accelerate angular speed relative to the length of the mouse sweep
+  qreal acc = (diff.length() * diff.length()) / qSqrt(width * width + height * height);
+
+
+  if (acc != 0) {
+    rotationAxis = (0.25 * angularSpeed * 0.75 * rotationAxis + n * acc).normalized();
+    angularSpeed += acc;
+    mousePressPosition = QVector2D(event->localPos());
+  }
+
+
+
+}
+
+void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    // Mouse release position - mouse press position
+    QVector2D diff = QVector2D(event->localPos()) - mousePressPosition;
+
+    // Rotation axis is perpendicular to the mouse position difference
+    // vector
+    QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
+
+    // Accelerate angular speed relative to the length of the mouse sweep
+    qreal acc = 0.1 * (diff.length() * diff.length()) / qSqrt(width * width + height * height);
+
+
+    if (acc != 0) {
+      rotationAxis = (0.25 * angularSpeed * 0.75 * rotationAxis + n * acc).normalized();
+      angularSpeed += acc;
+    }
+
+}
+
+
 void TrigramWidget::paintGL() {
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   glEnable(GL_BLEND);
   glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+
   unsigned size = getDataSize();
 
   program.bind();
   texture->bind();
   vao.bind();
 
-  QMatrix4x4 mp, m;
-  mp.setToIdentity();
-  if (width > height) {
-    mp.perspective(45, static_cast<double>(width) / height, 0.01f, 100.0f);
-  } else {
-    // wtf h4x.  gluPerspective fixes the viewport wrt y field of view, and
-    // we need to fix it to x instead.  So, rotate the world, fix to new y,
-    // rotate it back.
-    mp.rotate(90, 0, 0, 1);
-    mp.perspective(45, static_cast<double>(height) / width, 0.01f, 100.0f);
-    mp.rotate(-90, 0, 0, 1);
-  }
-  m.setToIdentity();
-  m.translate(0.0f, 0.0f, -5.0f);
-  m.rotate(90, 0, 0, 1);
-  m.rotate(angle, 0.5, 1, 0);
+
   int loc_sz = program.uniformLocation("sz");
   program.setUniformValue("tx", 0);
   program.setUniformValue("c_cyl", c_cyl);
   program.setUniformValue("c_sph", c_sph);
   program.setUniformValue("c_pos", c_pos);
-  program.setUniformValue("xfrm", mp * m);
   program.setUniformValue("c_brightness", c_brightness);
+
+
+  // Calculate model view transformation
+  QMatrix4x4 matrix;
+  matrix.translate(0.0, 0.0, -5.0);
+  matrix.rotate(rotation);
+
+
+  // projection matrices.
+  program.setUniformValue("xfrm", perspective * matrix);
+
   glUniform1ui(loc_sz, size);
+
+  // testomg
+  //glPointSize( 2.0 );
+  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+
   glDrawArrays(GL_POINTS, 0, size - 2);
 }
 

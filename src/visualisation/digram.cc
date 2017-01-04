@@ -69,24 +69,34 @@ void DigramWidget::initTextures() {
   texture_->setFormat(QOpenGLTexture::RG32F);
   texture_->allocateStorage();
 
+  // FIXME why is this using news ? should fit on stack.
   // effectively arrays of size [256][256][2], represented as single blocks
   auto bigtab = new uint64_t[256 * 256 * 2];
   memset(bigtab, 0, 256 * 256 * 2 * sizeof(*bigtab));
   auto ftab = new float[256 * 256 * 2];
   const uint8_t *rowdata = reinterpret_cast<const uint8_t *>(getData());
-  for (size_t i = 0; i < getDataSize() - 1; i++) {
-    size_t index = rowdata[i] * 512 + rowdata[i + 1] * 2;
-    bigtab[index]++;
-    bigtab[index + 1] += i;
+
+  // Build a histogram
+  for (size_t i = 0; i < getDataSize() - 1; i++) { // FIXME off by one?
+    size_t index = (rowdata[i] * 256 + rowdata[i + 1]) * 2;
+    bigtab[index]++;		// count hits
+    bigtab[index + 1] += i;	// keeps track of average source position.
   }
+
+  // wapiflapi: we can do a cumulative projection here.
+  // basicaly we sort the histogram and assign color based on rank not value.
+  // the problem is sortigng is slow, can we fix that?
+
+  // Convert histogram to percentages (realy 0 < floats < 1.0)
   for (int i = 0; i < 256; i++) {
     for (int j = 0; j < 256; j++) {
-      size_t index = i * 512 + j * 2;
+      size_t index = (i * 256 + j) * 2;
       ftab[index] = static_cast<float>(bigtab[index]) / getDataSize();
       ftab[index+1] =
-          static_cast<float>(bigtab[index+1]) / getDataSize() / getDataSize();
+	static_cast<float>(bigtab[index+1]) / getDataSize() / getDataSize();
     }
   }
+
   texture_->setData(QOpenGLTexture::RG, QOpenGLTexture::Float32,
                    reinterpret_cast<void *>(ftab));
   texture_->generateMipMaps();

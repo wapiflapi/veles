@@ -62,6 +62,16 @@ class TrigramWidget : public VisualisationWidget {
   void timerEvent(QTimerEvent *e) override;
 
   void resizeGL(int w, int h) override;
+
+  void focusInEvent(QFocusEvent *) override;
+  void focusOutEvent(QFocusEvent *) override;
+
+
+  //void mouseMoveEvent(QMouseEvent *) override;
+  void mousePressEvent(QMouseEvent *) override;
+  void mouseMoveEvent(QMouseEvent *) override;
+  void mouseReleaseEvent(QMouseEvent *) override;
+
   void paintGL() override;
 
   void initShaders();
@@ -85,12 +95,18 @@ class TrigramWidget : public VisualisationWidget {
   QOpenGLBuffer *databuf;
 
   QOpenGLVertexArrayObject vao;
-  float angle;
   float c_sph, c_cyl, c_pos, c_brightness;
   int width, height;
   EVisualisationShape shape_;
   EVisualisationMode mode_;
   int brightness_;
+
+  QMatrix4x4 perspective;
+
+  QQuaternion rotation;
+  QVector3D rotationAxis;
+  float angularSpeed;
+  QVector2D mousePressPosition;
 
   QPushButton *pause_button_, *cube_button_, *cylinder_button_, *sphere_button_;
   QSlider *brightness_slider_;

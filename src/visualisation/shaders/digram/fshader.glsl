@@ -26,5 +26,8 @@ void main() {
 	clr *= 4096.0;
 //	if (clr != 0.0)
 //		clr = 1.0 + (log(clr) / 10.0);
+
+	// color indicates where the data comes from in the selection.
 	o_color = vec4(clr * (1.0 - ch), clr/2.0, clr * ch, 0);
+
 }
