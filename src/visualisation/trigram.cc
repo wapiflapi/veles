@@ -583,7 +583,12 @@ void TrigramWidget::paintGL() {
   glUniform1ui(loc_sz, size);
 
   // testomg
-  //glPointSize( 2.0 );
+
+  float sz = (width > height ? height : width);
+
+  sz = sz / 650 * qPow(zoomLevel, 0.2);
+
+  glPointSize(sz);
   glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
   glDrawArrays(GL_POINTS, 0, size - 2);
