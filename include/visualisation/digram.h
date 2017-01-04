@@ -56,6 +56,7 @@ class DigramWidget : public VisualisationWidget {
   void initGeometry();
 
  private:
+
   QOpenGLShaderProgram program_;
   QOpenGLTexture *texture_;
 

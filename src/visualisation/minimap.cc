@@ -28,6 +28,7 @@ VisualisationMinimap::VisualisationMinimap(QWidget *parent) :
   QOpenGLWidget(parent), initialised_(false), gl_initialised_(false),
   sampler_(nullptr), rows_(0), cols_(0), selection_start_(0),
   selection_end_(0), top_line_pos_(1.0), bottom_line_pos_(-1.0),
+  position_delta(0),
   color_(k_default_color), mode_(k_default_mode), texture_(nullptr),
   lines_texture_(nullptr) {}
 
@@ -261,6 +262,9 @@ float* VisualisationMinimap::calculateEntropyTextureSingleWindow(
 
 void VisualisationMinimap::initializeGL() {
   if (!gl_initialised_) {
+
+    timer.start(12, this);
+
     initializeOpenGLFunctions();
     glClearColor(0, 0, 0, 1);
     initShaders();
@@ -544,13 +548,44 @@ void VisualisationMinimap::wheelEvent(QWheelEvent *event) {
   if (abs_pixels > 0 && abs_pixels < rows_ / texture_rows_) {
     pixels = std::copysign(rows_ / texture_rows_, pixels);
   }
-  float position = (top_line_pos_ + bottom_line_pos_) / 2;
-  float position_delta = static_cast<float>(2 * pixels) / rows_;
+  position_delta = static_cast<float>(2 * pixels) / rows_;
+  event->accept();
+}
 
-  centerSelectionOnCoord(position + position_delta);
+void VisualisationMinimap::timerEvent(QTimerEvent *event) {
+
+  if (drag_state_ != DragState::NO_DRAG || !position_delta) {
+    // we're already dragging or nothing else needs to be done.
+    event->accept();
+    return;
+  }
+
+  float speed = 0.01;
+
+  if (position_delta > 0) {
+    if (position_delta < speed) {
+      speed = position_delta;
+      position_delta = 0;
+    } else {
+      position_delta -= speed;
+    }
+  } else {
+    if (position_delta > speed) {
+      speed = position_delta;
+      position_delta = 0;
+    } else {
+      speed = -speed;
+      position_delta -= speed;
+    }
+  }
+
+  qDebug() << position_delta << speed;
+
+  float position = (top_line_pos_ + bottom_line_pos_) / 2;
+
+  centerSelectionOnCoord(position + speed);
   updateLinePositions(false, true);
 
-  event->accept();
 }
 
 void VisualisationMinimap::updateLinePositions(bool keep_selection,

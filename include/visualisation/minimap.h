@@ -26,7 +26,7 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QPair>
-
+#include <QBasicTimer>
 
 #include "util/sampling/isampler.h"
 
@@ -69,6 +69,8 @@ class VisualisationMinimap : public QOpenGLWidget,
   void mousePressEvent(QMouseEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *event) override;
   void wheelEvent(QWheelEvent *event) override;
+
+  void timerEvent(QTimerEvent *) override;
 
   void updateLinePositions(bool keep_selection = false,
                            bool keep_size = false);
@@ -137,6 +139,8 @@ class VisualisationMinimap : public QOpenGLWidget,
   bool gl_initialised_;
   util::ISampler *sampler_;
 
+  QBasicTimer timer;
+
   size_t rows_, cols_, texture_rows_, texture_cols_;
   size_t selection_start_, selection_end_;
   size_t sample_size_;
@@ -144,6 +148,8 @@ class VisualisationMinimap : public QOpenGLWidget,
 
   DragState drag_state_;
   float top_line_pos_, bottom_line_pos_;
+  float position_delta;
+
   MinimapColor color_;
   MinimapMode mode_;
 

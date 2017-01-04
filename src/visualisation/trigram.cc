@@ -25,6 +25,7 @@
 
 #include <QDebug>
 #include <QtMath>
+#include <QTime>
 
 #include <QLabel>
 #include <QMouseEvent>
@@ -356,10 +357,10 @@ void TrigramWidget::initShaders() {
   // Link shader pipeline
   if (!program.link()) close();
 
-  timer.start(12, this);
+  timer.start(16, this);
 }
 
-  void TrigramWidget::initTextures() {
+void TrigramWidget::initTextures() {
   int size = getDataSize();
   const uint8_t *data = reinterpret_cast<const uint8_t*>(getData());
 
@@ -391,7 +392,7 @@ void TrigramWidget::resizeGL(int w, int h)
 
   perspective.setToIdentity();
   if (width > height) {
-    perspective.perspective(45, static_cast<double>(width) / height, 0.01f, 100.0f);
+    perspective.perspective(45, static_cast<double>(width) / height, 0.001f, 100.0f);
   } else {
     // wtf h4x.  gluPerspective fixes the viewport wrt y field of view, and
     // we need to fix it to x instead.  So, rotate the world, fix to new y,
@@ -588,6 +589,7 @@ void TrigramWidget::paintGL() {
 
   sz = sz / 650 * qPow(zoomLevel, 0.2);
 
+  sz = 1;
   glPointSize(sz);
   glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
