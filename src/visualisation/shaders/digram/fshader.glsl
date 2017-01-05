@@ -35,7 +35,6 @@ void main() {
   // way in the vshader. Maybe we should do the same.
   // But that would require some refactoring, do that "tomorrow".
 
-
   vec4 t = texture(tx, xpos);
 
   float clr = t.x;

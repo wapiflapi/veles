@@ -52,7 +52,7 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
   shape_(EVisualisationShape::CUBE), mode_(EVisualisationMode::TRIGRAM),
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
 
-  rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.5),
+  rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.3),
   zoomLevel(1.0), zoomSpeed(0.0),
 
   position(0, 0, -5), movement(0, 0, 0), speed(0, 0, 0),
@@ -78,6 +78,7 @@ void TrigramWidget::setBrightness(const int value) {
   brightness_ = value;
   c_brightness = static_cast<float>(value) * value * value;
   c_brightness /= getDataSize();
+  c_brightness = std::min(1.2f, c_brightness);
 }
 
 void TrigramWidget::setMode(EVisualisationMode mode, bool animate) {
@@ -548,14 +549,12 @@ void TrigramWidget::paintGL() {
   texture->bind();
   vao.bind();
 
-
   int loc_sz = program.uniformLocation("sz");
   program.setUniformValue("tx", 0);
   program.setUniformValue("c_cyl", c_cyl);
   program.setUniformValue("c_sph", c_sph);
   program.setUniformValue("c_pos", c_pos);
   program.setUniformValue("c_brightness", c_brightness);
-
 
   // Calculate model view transformation
   QMatrix4x4 matrix;

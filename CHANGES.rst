@@ -5,3 +5,4 @@ a commplete list.
 - smooth scroll using mousewheel in minimap.
 - adaptive GL_POINT size according to window size and zoom.
 - polar coordinates for digram view.
+- tweaked max brightness
