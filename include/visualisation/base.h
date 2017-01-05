@@ -47,6 +47,7 @@ class VisualisationWidget : public QOpenGLWidget,
 
  protected:
   void initializeGL() override;
+  QIcon getColoredIcon(QString path, bool black_only = true);
 
   virtual void initializeVisualisationGL() = 0;
   virtual void refresh() = 0;

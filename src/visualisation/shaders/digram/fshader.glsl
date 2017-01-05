@@ -18,16 +18,37 @@
 in vec2 v_coord;
 layout (location = 0, index = 0) out vec4 o_color;
 uniform sampler2D tx;
-void main() {
-	vec4 t = texture(tx, v_coord);
-	float clr = t.x;
-	float ch = t.y;
-	ch /= clr;
-	clr *= 4096.0;
-//	if (clr != 0.0)
-//		clr = 1.0 + (log(clr) / 10.0);
+uniform float c_sqr, c_cir;
+const float TAU = 3.1415926535897932384626433832795 * 2;
+const float PI = 3.1415926535897932384626433832795;
 
-	// color indicates where the data comes from in the selection.
-	o_color = vec4(clr * (1.0 - ch), clr/2.0, clr * ch, 0);
+void main() {
+
+  vec2 z = v_coord * 2 - vec2(1, 1);
+
+  vec2 cpos = vec2(length(z), (atan(z.y, z.x) + PI) / TAU);
+  vec2 xpos = v_coord * (1 - c_cir) + cpos * c_cir;
+
+  // YES the transitiion is uglier than for trigrams.
+  // that's because it's freaking hard to compute the paths
+  // in this direction. For trigrams we do it the oposite
+  // way in the vshader. Maybe we should do the same.
+  // But that would require some refactoring, do that "tomorrow".
+
+
+  vec4 t = texture(tx, xpos);
+
+  float clr = t.x;
+  float ch = t.y;
+  ch /= clr;
+  clr *= 4096.0;
+
+  if (length(z) > 1) {
+    // not in circle.
+    clr = (1 - c_cir) * clr;
+  }
+
+  // color indicates where the data comes from in the selection.
+  o_color = vec4(clr * (1.0 - ch), clr/2.0, clr * ch, 0);
 
 }

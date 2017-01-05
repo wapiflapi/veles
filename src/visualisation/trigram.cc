@@ -60,7 +60,6 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
   brightness_slider_(nullptr), is_playing_(true),
   use_brightness_heuristic_(true) {
 
-
   // FIXME: we might not want to be the only focused thing :/
   setFocusPolicy(Qt::StrongFocus);
 
@@ -100,19 +99,6 @@ void TrigramWidget::refresh() {
   delete databuf;
   initTextures();
   doneCurrent();
-}
-
-QIcon TrigramWidget::getColoredIcon(QString path, bool black_only) {
-  QPixmap pixmap(path);
-  QPixmap mask;
-  if (black_only) {
-    mask = pixmap.createMaskFromColor(QColor("black"), Qt::MaskOutColor);
-  } else {
-    mask = pixmap.createMaskFromColor(QColor("white"), Qt::MaskInColor);
-  }
-  pixmap.fill(palette().color(QPalette::WindowText));
-  pixmap.setMask(mask);
-  return QIcon(pixmap);
 }
 
 bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
@@ -584,13 +570,11 @@ void TrigramWidget::paintGL() {
   glUniform1ui(loc_sz, size);
 
   // testomg
-
-  float sz = (width > height ? height : width);
-
-  sz = sz / 650 * qPow(zoomLevel, 0.2);
-
-  sz = 1;
+  float sz = std::max(width, height);
+  sz = std::max(0.75, sz / 1000 * qPow(zoomLevel, 0.2));
   glPointSize(sz);
+
+
   glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 
   glDrawArrays(GL_POINTS, 0, size - 2);

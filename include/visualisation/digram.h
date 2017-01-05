@@ -30,6 +30,8 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLFunctions_3_2_Core>
+#include <QBasicTimer>
+#include <QPushButton>
 
 #include "visualisation/base.h"
 
@@ -40,12 +42,20 @@ class DigramWidget : public VisualisationWidget {
   Q_OBJECT
 
  public:
+
+  enum class EVisualisationShape {SQUARE, CIRCLE};
+  enum class EVisualisationMode {BIGRAM};
+
   explicit DigramWidget(QWidget *parent = 0);
   ~DigramWidget();
 
 
  protected:
   void refresh() override;
+  bool prepareOptionsPanel(QBoxLayout *);
+  void setShape(EVisualisationShape);
+  void timerEvent(QTimerEvent *);
+
   void initializeVisualisationGL() override;
 
   void resizeGL(int w, int h) override;
@@ -57,11 +67,20 @@ class DigramWidget : public VisualisationWidget {
 
  private:
 
+  QBasicTimer timer;
   QOpenGLShaderProgram program_;
   QOpenGLTexture *texture_;
 
   QOpenGLBuffer square_vertex_;
   QOpenGLVertexArrayObject vao_;
+  float c_sqr, c_cir;
+
+
+  EVisualisationShape shape_;
+  EVisualisationMode mode_;
+
+  QPushButton *square_button_, *circle_button_;
+
 };
 
 }  // namespace visualisation

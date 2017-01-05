@@ -548,7 +548,15 @@ void VisualisationMinimap::wheelEvent(QWheelEvent *event) {
   if (abs_pixels > 0 && abs_pixels < rows_ / texture_rows_) {
     pixels = std::copysign(rows_ / texture_rows_, pixels);
   }
-  position_delta = static_cast<float>(2 * pixels) / rows_;
+
+
+  float delta = static_cast<float>(2 * pixels) / rows_;
+
+  qDebug() << position_delta  << delta;
+  if (delta != 0 && position_delta / delta < 2) {
+    position_delta += delta;
+  }
+
   event->accept();
 }
 
@@ -556,6 +564,7 @@ void VisualisationMinimap::timerEvent(QTimerEvent *event) {
 
   if (drag_state_ != DragState::NO_DRAG || !position_delta) {
     // we're already dragging or nothing else needs to be done.
+    position_delta = 0;
     event->accept();
     return;
   }
@@ -578,8 +587,6 @@ void VisualisationMinimap::timerEvent(QTimerEvent *event) {
       position_delta -= speed;
     }
   }
-
-  qDebug() << position_delta << speed;
 
   float position = (top_line_pos_ + bottom_line_pos_) / 2;
 

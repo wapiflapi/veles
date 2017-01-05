@@ -20,6 +20,9 @@
 #include <QComboBox>
 #include <QLabel>
 
+#include <QPixmap>
+#include <QBitmap>
+
 namespace veles {
 namespace visualisation {
 
@@ -64,6 +67,20 @@ char VisualisationWidget::getByte(size_t index) {
 
 bool VisualisationWidget::prepareOptionsPanel(QBoxLayout *layout) {
   return false;
+}
+
+
+QIcon VisualisationWidget::getColoredIcon(QString path, bool black_only) {
+  QPixmap pixmap(path);
+  QPixmap mask;
+  if (black_only) {
+    mask = pixmap.createMaskFromColor(QColor("black"), Qt::MaskOutColor);
+  } else {
+    mask = pixmap.createMaskFromColor(QColor("white"), Qt::MaskInColor);
+  }
+  pixmap.fill(palette().color(QPalette::WindowText));
+  pixmap.setMask(mask);
+  return QIcon(pixmap);
 }
 
 }  // namespace visualisation

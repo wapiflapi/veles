@@ -16,10 +16,23 @@
  */
 #include "visualisation/digram.h"
 
+
+#include <algorithm>
+#include <functional>
+#include <vector>
+
+#include <QPixmap>
+#include <QBitmap>
+
+
+
 namespace veles {
 namespace visualisation {
 
-DigramWidget::DigramWidget(QWidget *parent) : VisualisationWidget(parent) {}
+DigramWidget::DigramWidget(QWidget *parent) :
+  VisualisationWidget(parent),
+  c_sqr(0), c_cir(0),
+  shape_(EVisualisationShape::SQUARE), mode_(EVisualisationMode::BIGRAM) {}
 
 DigramWidget::~DigramWidget() {
   makeCurrent();
@@ -35,6 +48,70 @@ void DigramWidget::refresh() {
   doneCurrent();
   update();
 }
+
+bool DigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
+  VisualisationWidget::prepareOptionsPanel(layout);
+
+
+  QHBoxLayout *shape_box = new QHBoxLayout();
+  square_button_ = new QPushButton();
+  square_button_->setIcon(getColoredIcon(":/images/cube.png", false));
+  square_button_->setIconSize(QSize(32, 32));
+  connect(square_button_, &QPushButton::released,
+          std::bind(&DigramWidget::setShape, this,
+                    EVisualisationShape::SQUARE));
+  shape_box->addWidget(square_button_);
+
+  circle_button_ = new QPushButton();
+  circle_button_->setIcon(getColoredIcon(":/images/sphere.png"));
+  circle_button_->setIconSize(QSize(32, 32));
+
+  connect(circle_button_, &QPushButton::released,
+          std::bind(&DigramWidget::setShape, this,
+                    EVisualisationShape::CIRCLE));
+  shape_box->addWidget(circle_button_);
+
+
+  layout->addLayout(shape_box);
+
+  return true;
+}
+
+
+void DigramWidget::setShape(EVisualisationShape shape) {
+  shape_ = shape;
+}
+
+
+
+void DigramWidget::timerEvent(QTimerEvent *e) {
+
+  // neat trick here to transform towards projections,
+  // always move towards it, fix later if we went to far.
+
+  if (shape_ == EVisualisationShape::SQUARE) {
+    c_sqr += 0.01;
+  } else {
+    c_sqr -= 0.01;
+  }
+
+  if (shape_ == EVisualisationShape::CIRCLE) {
+    c_cir += 0.01;
+  } else {
+    c_cir -= 0.01;
+  }
+
+  if (c_sqr > 1) c_sqr = 1;
+  if (c_sqr < 0) c_sqr = 0;
+  if (c_cir > 1) c_cir = 1;
+  if (c_cir < 0) c_cir = 0;
+
+  // Request an update
+  // TODO: only if something is changing.
+  update();
+}
+
+
 
 void DigramWidget::initializeVisualisationGL() {
   initializeOpenGLFunctions();
@@ -61,6 +138,8 @@ void DigramWidget::initShaders() {
 
   // Bind shader pipeline for use
   if (!program_.bind()) close();
+
+  timer.start(16, this);
 }
 
 void DigramWidget::initTextures() {
@@ -69,7 +148,6 @@ void DigramWidget::initTextures() {
   texture_->setFormat(QOpenGLTexture::RG32F);
   texture_->allocateStorage();
 
-  // FIXME why is this using news ? should fit on stack.
   // effectively arrays of size [256][256][2], represented as single blocks
   auto bigtab = new uint64_t[256 * 256 * 2];
   memset(bigtab, 0, 256 * 256 * 2 * sizeof(*bigtab));
@@ -118,16 +196,21 @@ void DigramWidget::initGeometry() {
   };
   square_vertex_.bind();
   square_vertex_.allocate(v, sizeof v);
+
   vao_.create();
 }
 
 void DigramWidget::resizeGL(int w, int h) {}
 
 void DigramWidget::paintGL() {
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   texture_->bind();
   vao_.bind();
+
+  program_.setUniformValue("c_sqr", c_sqr);
+  program_.setUniformValue("c_cir", c_cir);
 
   square_vertex_.bind();
   int vertexLocation = program_.attributeLocation("a_position");

@@ -90,7 +90,6 @@ class TrigramWidget : public VisualisationWidget {
   void setBrightness(int value);
   int suggestBrightness(); // heuristic
   void autoSetBrightness();
-  QIcon getColoredIcon(QString path, bool black_only = true);
 
   QBasicTimer timer;
   QOpenGLShaderProgram program;
