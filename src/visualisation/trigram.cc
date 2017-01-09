@@ -46,7 +46,7 @@ const double k_brightness_heuristic_threshold = 0.66;
 const int k_brightness_heuristic_min = 38;
 const int k_brightness_heuristic_max = 66;
 // decrease this to reduce noise (but you may lose data if you overdo it)
-const double k_brightness_heuristic_scaling = 2.5;
+const double k_brightness_heuristic_scaling = 2.0;
 
 TrigramWidget::TrigramWidget(QWidget *parent) :
   VisualisationWidget(parent),
@@ -57,7 +57,6 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
 
   rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.3),
-  zoomLevel(1.0), zoomSpeed(0.0),
 
   position(0, 0, -5), movement(0, 0, 0), speed(0, 0, 0),
 
@@ -133,12 +132,12 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   connect(mode_flat_pushbutton_, SIGNAL(toggled(bool)),
 	  this, SLOT(setFlat(bool)));
 
-  mode_layered_x_pushbutton_ = new QPushButton("layered - rot");
+  mode_layered_x_pushbutton_ = new QPushButton("sorted");
   mode_layered_x_pushbutton_->setCheckable(true);
   connect(mode_layered_x_pushbutton_, SIGNAL(toggled(bool)),
           this, SLOT(setLayeredX(bool)));
 
-  mode_layered_z_pushbutton_ = new QPushButton("layered - nav");
+  mode_layered_z_pushbutton_ = new QPushButton("layered");
   mode_layered_z_pushbutton_->setCheckable(true);
   connect(mode_layered_z_pushbutton_, SIGNAL(toggled(bool)),
           this, SLOT(setLayeredZ(bool)));
@@ -339,44 +338,27 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
     rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
   }
 
-  if (zoomSpeed < 0.01 && zoomSpeed > -0.01) {
-    zoomSpeed = 0.0;
-  } else {
-    zoomLevel += zoomSpeed * 0.01 * zoomLevel;
-  }
-
-  if ((zoomLevel > 1000 && zoomSpeed > 0) || (zoomLevel < 0.5 && zoomSpeed < 0)) {
-    zoomSpeed = -zoomSpeed;
-  }
-
-  zoomSpeed *= 0.90;
-
   // movement speed
+  // qDebug() << speed << movement;
 
-  speed += movement;
+  qDebug() << "before:" << speed;
 
-  if (speed.x() > -0.01 && 0.01 > speed.x()) {
+  if (speed.length() < 5) {
+    speed += 0.01 * movement + 0.2 * speed.length() * movement;
+  }
+
+  qDebug() << speed << speed * 0.90;
+
+  if (speed.x() > -0.001 && 0.001 > speed.x()) {
     speed.setX(0);
   }
 
-  if (speed.y() > -0.01 && 0.01 > speed.y()) {
+  if (speed.y() > -0.001 && 0.001 > speed.y()) {
     speed.setY(0);
   }
 
-  if (speed.z() > -0.01 && 0.01 > speed.z()) {
+  if (speed.z() > -0.001 && 0.001 > speed.z()) {
     speed.setZ(0);
-  }
-
-  if (position.x() < -1.5*zoomLevel || position.x() > 1.5*zoomLevel) {
-    speed.setX(-speed.x());
-  }
-
-  if (position.y() < -1.5*zoomLevel || position.y() > 1.5*zoomLevel) {
-    speed.setY(-speed.y());
-  }
-
-  if (position.z() < -5 * 5*zoomLevel || position.z() > 0) {
-    speed.setZ(-speed.z());
   }
 
   position += speed * 0.01;
@@ -457,7 +439,7 @@ void TrigramWidget::resizeGL(int w, int h)
     // we need to fix it to x instead.  So, rotate the world, fix to new y,
     // rotate it back.
     perspective.rotate(90, 0, 0, 1);
-    perspective.perspective(45, static_cast<double>(height) / width, 0.01f, 100.0f);
+    perspective.perspective(45, static_cast<double>(height) / width, 0.001f, 100.0f);
     perspective.rotate(-90, 0, 0, 1);
   }
 
@@ -466,15 +448,11 @@ void TrigramWidget::resizeGL(int w, int h)
 void TrigramWidget::focusInEvent(QFocusEvent *event)
 {
   qDebug() << "focus in" << event;
-  // setCursor(Qt::BlankCursor);
-  // QCursor::setPos(mapToGlobal(QPoint(width / 2, height / 2)));
 }
 
 void TrigramWidget::focusOutEvent(QFocusEvent *event)
 {
   qDebug() << "focus out" << event;
-  // QCursor::setPos(mapToGlobal(QPoint(width / 2, height / 2)));
-  // setCursor(Qt::ArrowCursor);
 }
 
 void TrigramWidget::keyPressEvent(QKeyEvent *event)
@@ -505,6 +483,22 @@ void TrigramWidget::keyPressEvent(QKeyEvent *event)
     movement.setZ(1);
   }
 
+
+  if (event->key() == Qt::Key_Space) {
+
+    // We want flat projection by default in two cases.
+    if (mode_flat_ && shape_ != EVisualisationShape::SPHERE) {
+      rotation = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
+      position = QVector3D(0, 0, -2.414);
+      angularSpeed = 0;
+    } else {
+      rotation = QQuaternion::fromAxisAndAngle(QVector3D(-1, 1, 0).normalized(), -30);
+      position = QVector3D(0, 0, -5);
+      angularSpeed = 0;
+    }
+
+
+  }
 
 }
 
@@ -549,7 +543,6 @@ void TrigramWidget::mousePressEvent(QMouseEvent *event)
   mousePressPosition = QVector2D(event->localPos());
 
   if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
-    qDebug() << "changing play";
     playPause();
   }
 
@@ -602,10 +595,18 @@ void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
       angularSpeed += acc;
     }
 
+    // This is satisfying.
+    if (!is_playing_ && angularSpeed > 5) {
+      angularSpeed = angularSpeed / 15;
+      playPause();
+    }
 }
 
 void TrigramWidget::wheelEvent(QWheelEvent *event) {
-  zoomSpeed += (event->delta() / 8) / 15;
+
+  float movement = (event->delta() / 8) / 15;
+  float zoom = 2 * movement * qAbs(movement);
+  speed.setZ(speed.z() + zoom);
 }
 
 void TrigramWidget::paintGL() {
@@ -636,7 +637,6 @@ void TrigramWidget::paintGL() {
 
   matrix.translate(position);
   matrix.rotate(rotation);
-  matrix.scale(zoomLevel);
 
   // projection matrices.
   program.setUniformValue("matrix", matrix);
@@ -645,7 +645,6 @@ void TrigramWidget::paintGL() {
 
   // testomg
   float sz = std::min(width, height) / 256.0;
-  // qDebug() << sz;
   program.setUniformValue("voxsz", sz);
 
   glEnable(GL_PROGRAM_POINT_SIZE);

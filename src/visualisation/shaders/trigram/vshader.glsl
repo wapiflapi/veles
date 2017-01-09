@@ -53,7 +53,7 @@ void main() {
 
 	vec4 pos = perspective * matrix * vec4(xpos, 1);
 
-	gl_PointSize = 5 * voxsz / pos.w;
+	gl_PointSize = max(0.5, min(20, 2 * voxsz / pos.w));
 
 	gl_Position = pos;
 

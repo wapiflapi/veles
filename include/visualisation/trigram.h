@@ -116,8 +116,6 @@ class TrigramWidget : public VisualisationWidget {
   QQuaternion rotation;
   QVector3D rotationAxis;
   float angularSpeed;
-  float zoomLevel;
-  float zoomSpeed;
   QVector2D mousePressPosition;
 
   QVector3D position, movement, speed;
