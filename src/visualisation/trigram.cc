@@ -127,18 +127,24 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
 
   QHBoxLayout *mode_buttons = new QHBoxLayout();
 
-  mode_flat_pushbutton_ = new QPushButton("flat");
+  mode_flat_pushbutton_ = new QPushButton();
   mode_flat_pushbutton_->setCheckable(true);
+  mode_flat_pushbutton_->setIcon(getColoredIcon(":/images/flat.png", false));
+  mode_flat_pushbutton_->setIconSize(QSize(32, 32));
   connect(mode_flat_pushbutton_, SIGNAL(toggled(bool)),
 	  this, SLOT(setFlat(bool)));
 
-  mode_layered_x_pushbutton_ = new QPushButton("sorted");
+  mode_layered_x_pushbutton_ = new QPushButton();
   mode_layered_x_pushbutton_->setCheckable(true);
+  mode_layered_x_pushbutton_->setIcon(getColoredIcon(":/images/sorted.png"));
+  mode_layered_x_pushbutton_->setIconSize(QSize(32, 32));
   connect(mode_layered_x_pushbutton_, SIGNAL(toggled(bool)),
           this, SLOT(setLayeredX(bool)));
 
-  mode_layered_z_pushbutton_ = new QPushButton("layered");
+  mode_layered_z_pushbutton_ = new QPushButton();
   mode_layered_z_pushbutton_->setCheckable(true);
+  mode_layered_z_pushbutton_->setIcon(getColoredIcon(":/images/layered.png"));
+  mode_layered_z_pushbutton_->setIconSize(QSize(32, 32));
   connect(mode_layered_z_pushbutton_, SIGNAL(toggled(bool)),
           this, SLOT(setLayeredZ(bool)));
 
@@ -187,6 +193,10 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   shape_button_group->setExclusive(true);
 
   layout->addLayout(shape_buttons);
+
+  center_button_ = new QPushButton("center view");
+  layout->addWidget(center_button_);
+  connect(center_button_, SIGNAL(released()), this, SLOT(centerView()));
 
   return true;
 }
@@ -341,13 +351,9 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
   // movement speed
   // qDebug() << speed << movement;
 
-  qDebug() << "before:" << speed;
-
   if (speed.length() < 5) {
     speed += 0.01 * movement + 0.2 * speed.length() * movement;
   }
-
-  qDebug() << speed << speed * 0.90;
 
   if (speed.x() > -0.001 && 0.001 > speed.x()) {
     speed.setX(0);
@@ -485,23 +491,25 @@ void TrigramWidget::keyPressEvent(QKeyEvent *event)
 
 
   if (event->key() == Qt::Key_Space) {
-
-    // We want flat projection by default in two cases.
-    if (mode_flat_ && shape_ != EVisualisationShape::SPHERE) {
-      rotation = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
-      position = QVector3D(0, 0, -2.414);
-      angularSpeed = 0;
-    } else {
-      rotation = QQuaternion::fromAxisAndAngle(QVector3D(-1, 1, 0).normalized(), -30);
-      position = QVector3D(0, 0, -5);
-      angularSpeed = 0;
-    }
-
-
+    centerView();
   }
 
 }
 
+void TrigramWidget::centerView() {
+
+  // We want flat projection by default in two cases.
+  if (mode_flat_ && shape_ != EVisualisationShape::SPHERE) {
+    rotation = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
+    position = QVector3D(0, 0, -2.414);
+    angularSpeed = 0;
+  } else {
+    rotation = QQuaternion::fromAxisAndAngle(QVector3D(-1, 1, 0).normalized(), -30);
+    position = QVector3D(0, 0, -5);
+    angularSpeed = 0;
+  }
+
+}
 
 void TrigramWidget::keyReleaseEvent(QKeyEvent *event)
 {

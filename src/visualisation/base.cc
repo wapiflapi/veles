@@ -73,6 +73,7 @@ bool VisualisationWidget::prepareOptionsPanel(QBoxLayout *layout) {
 QIcon VisualisationWidget::getColoredIcon(QString path, bool black_only) {
   QPixmap pixmap(path);
   QPixmap mask;
+
   if (black_only) {
     mask = pixmap.createMaskFromColor(QColor("black"), Qt::MaskOutColor);
   } else {

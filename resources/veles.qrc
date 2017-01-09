@@ -16,6 +16,9 @@
         <file>images/cylinder.png</file>
         <file>images/sphere.png</file>
         <file>images/cube.png</file>
+        <file>images/flat.png</file>
+        <file>images/layered.png</file>
+        <file>images/sorted.png</file>
         <file>images/error.ico</file>
         <file>images/newTab.png</file>
         <file>images/parse.png</file>

@@ -80,6 +80,7 @@ class TrigramWidget : public VisualisationWidget {
   void initGeometry();
 
  private slots:
+  void centerView();
   void playPause();
   void setFlat(bool);
   void setLayeredX(bool);
@@ -120,7 +121,8 @@ class TrigramWidget : public VisualisationWidget {
 
   QVector3D position, movement, speed;
 
-  QPushButton *pause_button_, *cube_button_, *cylinder_button_, *sphere_button_;
+  QPushButton *pause_button_, *center_button_;
+  QPushButton *cube_button_, *cylinder_button_, *sphere_button_;
   QSlider *brightness_slider_;
   QCheckBox *use_heuristic_checkbox_;
   bool is_playing_, use_brightness_heuristic_;
