@@ -107,18 +107,11 @@ util::ISampler* VisualisationPanel::getSampler(ESampler type,
 
 VisualisationWidget* VisualisationPanel::getVisualisation(EVisualisation type,
                                                           QWidget* parent) {
-  TrigramWidget* trigram = nullptr;
   switch (type) {
   case EVisualisation::DIGRAM:
     return new DigramWidget(parent);
-  case EVisualisation::TRIGRAM:
-    trigram = new TrigramWidget(parent);
-    trigram->setMode(TrigramWidget::EVisualisationMode::TRIGRAM);
-    return trigram;
-  case EVisualisation::LAYERED_DIGRAM:
-    trigram = new TrigramWidget(parent);
-    trigram->setMode(TrigramWidget::EVisualisationMode::LAYERED_DIGRAM, false);
-    return trigram;
+  case EVisualisation::EVERYTHING:
+    return new TrigramWidget(parent);
   }
   return nullptr;
 }
@@ -162,23 +155,7 @@ void VisualisationPanel::showDigramVisualisation() {
 }
 
 void VisualisationPanel::showTrigramVisualisation() {
-  if (visualisation_type_ == EVisualisation::LAYERED_DIGRAM) {
-    visualisation_type_ = EVisualisation::TRIGRAM;
-    auto trigram = static_cast<TrigramWidget*>(visualisation_);
-    trigram->setMode(TrigramWidget::EVisualisationMode::TRIGRAM);
-  } else {
-    setVisualisation(EVisualisation::TRIGRAM);
-  }
-}
-
-void VisualisationPanel::showLayeredDigramVisualisation() {
- if (visualisation_type_ == EVisualisation::TRIGRAM) {
-    visualisation_type_ = EVisualisation::LAYERED_DIGRAM;
-    auto trigram = static_cast<TrigramWidget*>(visualisation_);
-    trigram->setMode(TrigramWidget::EVisualisationMode::LAYERED_DIGRAM);
-  } else {
-    setVisualisation(EVisualisation::LAYERED_DIGRAM);
-  }
+  setVisualisation(EVisualisation::EVERYTHING);
 }
 
 void VisualisationPanel::minimapSelectionChanged(size_t start, size_t end) {
@@ -259,16 +236,9 @@ void VisualisationPanel::initOptionsPanel() {
   connect(trigram_action_, SIGNAL(triggered()), this,
           SLOT(showTrigramVisualisation()));
 
-  layered_digram_action_ =
-      new QAction(QIcon(":/images/nginx3d_32.png"), tr("&Layered Digram"), this);
-  layered_digram_action_->setToolTip("Layered Digram Visualisation");
-  connect(layered_digram_action_, SIGNAL(triggered()), this,
-          SLOT(showLayeredDigramVisualisation()));
-
   visualisation_toolbar_ = new QToolBar("Visualisation Type");
   visualisation_toolbar_->addAction(digram_action_);
   visualisation_toolbar_->addAction(trigram_action_);
-  visualisation_toolbar_->addAction(layered_digram_action_);
   options_layout_->addWidget(visualisation_toolbar_);
 
   QLabel *sampling_label = new QLabel("Sampling method:");

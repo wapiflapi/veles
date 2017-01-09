@@ -16,10 +16,14 @@
  */
 #version 330
 
-uniform mat4 xfrm;
+uniform mat4 perspective;
+uniform mat4 matrix;
+uniform float voxsz;
 uniform usamplerBuffer tx;
 uniform uint sz;
-uniform float c_cyl, c_sph, c_pos;
+uniform float c_cyl, c_sph;
+uniform float c_flat, c_layered_x, c_layered_z;
+
 out float v_pos;
 const float TAU = 3.1415926535897932384626433832795 * 2;
 
@@ -30,8 +34,13 @@ void main() {
 	uint y = texelFetch(tx, vid + 1).x;
 	uint z = texelFetch(tx, vid + 2).x;
 	vec3 v_coord = vec3(float(x)+0.5, float(y)+0.5, float(z)+0.5) / 256.0;
-	v_coord.z *= (1.0 - c_pos);
-	v_coord.z += c_pos * v_pos;
+
+	v_coord.x = c_layered_x * v_pos + (1.0 - c_layered_x) * v_coord.x;
+	// v_coord.z = c_flat * (0.5 + 0.5 * c_sph) + (1.0 - c_flat) * v_coord.z;
+
+	v_coord.z = c_flat * (0.5 + 0.5 * c_sph) + (1.0 - c_flat) *
+	  (c_layered_z * v_pos + (1.0 - c_layered_z) * v_coord.z);
+
 	vec3 xpos = v_coord * vec3(2, 2, 2) - vec3(1, 1, 1);
 	xpos *= (1.0 - c_cyl - c_sph);
 	vec2 a1pos = vec2(cos(v_coord.x * TAU), sin(v_coord.x * TAU));
@@ -40,5 +49,12 @@ void main() {
 	xpos += cpos * c_cyl;
 	vec3 spos = vec3(a1pos * a2pos.x, a2pos.y) * v_coord.z;
 	xpos += spos * c_sph;
-	gl_Position = xfrm * vec4(xpos, 1);
+
+
+	vec4 pos = perspective * matrix * vec4(xpos, 1);
+
+	gl_PointSize = 5 * voxsz / pos.w;
+
+	gl_Position = pos;
+
 }

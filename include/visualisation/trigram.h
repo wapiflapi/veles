@@ -44,13 +44,11 @@ class TrigramWidget : public VisualisationWidget {
 
  public:
   enum class EVisualisationShape {CUBE, CYLINDER, SPHERE};
-  enum class EVisualisationMode {TRIGRAM, LAYERED_DIGRAM};
 
   explicit TrigramWidget(QWidget *parent = 0);
   ~TrigramWidget();
 
   bool prepareOptionsPanel(QBoxLayout *layout) override;
-  void setMode(EVisualisationMode mode, bool animate = true);
 
  public slots:
   void brightnessSliderMoved(int value);
@@ -83,6 +81,9 @@ class TrigramWidget : public VisualisationWidget {
 
  private slots:
   void playPause();
+  void setFlat(bool);
+  void setLayeredX(bool);
+  void setLayeredZ(bool);
   void setShape(EVisualisationShape shape);
   void setUseBrightnessHeuristic(int state);
 
@@ -98,9 +99,16 @@ class TrigramWidget : public VisualisationWidget {
 
   QOpenGLVertexArrayObject vao;
   float c_sph, c_cyl, c_pos, c_brightness;
+  float c_flat, c_layered_x, c_layered_z;
+
+  bool mode_flat_, mode_layered_x_, mode_layered_z_;
+
+  QPushButton *mode_flat_pushbutton_;
+  QPushButton *mode_layered_x_pushbutton_;
+  QPushButton *mode_layered_z_pushbutton_;
+
   int width, height;
   EVisualisationShape shape_;
-  EVisualisationMode mode_;
   int brightness_;
 
   QMatrix4x4 perspective;

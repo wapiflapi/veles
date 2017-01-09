@@ -48,16 +48,15 @@ class VisualisationPanel : public QWidget {
   void setSampleSize(int kilobytes);
   void showDigramVisualisation();
   void showTrigramVisualisation();
-  void showLayeredDigramVisualisation();
   void minimapSelectionChanged(size_t start, size_t end);
 
  private:
   enum class ESampler {NO_SAMPLER, UNIFORM_SAMPLER};
-  enum class EVisualisation {DIGRAM, TRIGRAM, LAYERED_DIGRAM};
+  enum class EVisualisation {DIGRAM, EVERYTHING};
 
   static const std::map<QString, ESampler> k_sampler_map;
   static const ESampler k_default_sampler = ESampler::UNIFORM_SAMPLER;
-  static const EVisualisation k_default_visualisation = EVisualisation::TRIGRAM;
+  static const EVisualisation k_default_visualisation = EVisualisation::EVERYTHING;
   static const int k_max_sample_size = 128 * 1024;
   static const int k_minimap_sample_size = 4096;
 

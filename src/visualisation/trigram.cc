@@ -34,7 +34,8 @@
 #include <QPixmap>
 #include <QBitmap>
 #include <QHBoxLayout>
-
+#include <QGuiApplication>
+#include <QButtonGroup>
 
 namespace veles {
 namespace visualisation {
@@ -48,8 +49,11 @@ const int k_brightness_heuristic_max = 66;
 const double k_brightness_heuristic_scaling = 2.5;
 
 TrigramWidget::TrigramWidget(QWidget *parent) :
-  VisualisationWidget(parent), c_sph(0), c_cyl(0), c_pos(0),
-  shape_(EVisualisationShape::CUBE), mode_(EVisualisationMode::TRIGRAM),
+  VisualisationWidget(parent),
+  c_sph(0), c_cyl(0),
+  c_flat(0), c_layered_x(0), c_layered_z(0),
+  mode_flat_(false), mode_layered_x_(false), mode_layered_z_(false),
+  shape_(EVisualisationShape::CUBE),
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
 
   rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.3),
@@ -79,15 +83,6 @@ void TrigramWidget::setBrightness(const int value) {
   c_brightness = static_cast<float>(value) * value * value;
   c_brightness /= getDataSize();
   c_brightness = std::min(1.2f, c_brightness);
-}
-
-void TrigramWidget::setMode(EVisualisationMode mode, bool animate) {
-  mode_ = mode;
-  if (mode_ == EVisualisationMode::LAYERED_DIGRAM && !animate) {
-    c_pos = 1;
-  } else if (mode_ == EVisualisationMode::TRIGRAM && !animate) {
-    c_pos = 0;
-  }
 }
 
 void TrigramWidget::refresh() {
@@ -131,33 +126,68 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   connect(pause_button_, SIGNAL(released()),
           this, SLOT(playPause()));
 
-  QHBoxLayout *shape_box = new QHBoxLayout();
+  QHBoxLayout *mode_buttons = new QHBoxLayout();
+
+  mode_flat_pushbutton_ = new QPushButton("flat");
+  mode_flat_pushbutton_->setCheckable(true);
+  connect(mode_flat_pushbutton_, SIGNAL(toggled(bool)),
+	  this, SLOT(setFlat(bool)));
+
+  mode_layered_x_pushbutton_ = new QPushButton("layered - rot");
+  mode_layered_x_pushbutton_->setCheckable(true);
+  connect(mode_layered_x_pushbutton_, SIGNAL(toggled(bool)),
+          this, SLOT(setLayeredX(bool)));
+
+  mode_layered_z_pushbutton_ = new QPushButton("layered - nav");
+  mode_layered_z_pushbutton_->setCheckable(true);
+  connect(mode_layered_z_pushbutton_, SIGNAL(toggled(bool)),
+          this, SLOT(setLayeredZ(bool)));
+
+
+  mode_buttons->addWidget(mode_flat_pushbutton_);
+  mode_buttons->addWidget(mode_layered_x_pushbutton_);
+  mode_buttons->addWidget(mode_layered_z_pushbutton_);
+  layout->addLayout(mode_buttons);
+
+  QHBoxLayout *shape_buttons = new QHBoxLayout();
+  QButtonGroup *shape_button_group = new QButtonGroup();
+
   cube_button_ = new QPushButton();
+  cube_button_->setCheckable(true);
+  cube_button_->setChecked(true);
   cube_button_->setIcon(getColoredIcon(":/images/cube.png", false));
   cube_button_->setIconSize(QSize(32, 32));
   connect(cube_button_, &QPushButton::released,
           std::bind(&TrigramWidget::setShape, this,
                     EVisualisationShape::CUBE));
-  shape_box->addWidget(cube_button_);
 
   cylinder_button_ = new QPushButton();
+  cylinder_button_->setCheckable(true);
   cylinder_button_->setIcon(getColoredIcon(":/images/cylinder.png", false));
   cylinder_button_->setIconSize(QSize(32, 32));
   connect(cylinder_button_, &QPushButton::released,
           std::bind(&TrigramWidget::setShape, this,
                     EVisualisationShape::CYLINDER));
-  shape_box->addWidget(cylinder_button_);
 
   sphere_button_ = new QPushButton();
+  sphere_button_->setCheckable(true);
   sphere_button_->setIcon(getColoredIcon(":/images/sphere.png"));
   sphere_button_->setIconSize(QSize(32, 32));
 
   connect(sphere_button_, &QPushButton::released,
           std::bind(&TrigramWidget::setShape, this,
                     EVisualisationShape::SPHERE));
-  shape_box->addWidget(sphere_button_);
 
-  layout->addLayout(shape_box);
+  shape_buttons->addWidget(cube_button_);
+  shape_buttons->addWidget(cylinder_button_);
+  shape_buttons->addWidget(sphere_button_);
+
+  shape_button_group->addButton(cube_button_);
+  shape_button_group->addButton(cylinder_button_);
+  shape_button_group->addButton(sphere_button_);
+  shape_button_group->setExclusive(true);
+
+  layout->addLayout(shape_buttons);
 
   return true;
 }
@@ -193,6 +223,28 @@ void TrigramWidget::playPause() {
   }
   is_playing_ = !is_playing_;
 }
+
+void TrigramWidget::setFlat(bool val) {
+  mode_layered_z_pushbutton_->setEnabled(!val);
+  mode_flat_ = val;
+}
+
+void TrigramWidget::setLayeredX(bool val) {
+  if (!QGuiApplication::keyboardModifiers() &&
+      val && mode_layered_z_pushbutton_->isChecked()) {
+    mode_layered_z_pushbutton_->setChecked(false);
+  }
+  mode_layered_x_ = val;
+}
+
+void TrigramWidget::setLayeredZ(bool val) {
+  if (!QGuiApplication::keyboardModifiers() &&
+      val && mode_layered_x_pushbutton_->isChecked()) {
+    mode_layered_x_pushbutton_->setChecked(false);
+  }
+  mode_layered_z_ = val;
+}
+
 
 void TrigramWidget::setShape(EVisualisationShape shape) {
   shape_ = shape;
@@ -239,18 +291,38 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
     c_sph -= 0.01;
   }
 
-  if (mode_ == EVisualisationMode::LAYERED_DIGRAM) {
-    c_pos += 0.01;
-  } else {
-    c_pos -= 0.01;
-  }
-
   if (c_cyl > 1) c_cyl = 1;
   if (c_cyl < 0) c_cyl = 0;
   if (c_sph > 1) c_sph = 1;
   if (c_sph < 0) c_sph = 0;
-  if (c_pos > 1) c_pos = 1;
-  if (c_pos < 0) c_pos = 0;
+
+  if (mode_flat_) {
+    c_flat += 0.01;
+  } else {
+    c_flat -= 0.01;
+  }
+
+  if (mode_layered_x_) {
+    c_layered_x += 0.01;
+  } else {
+    c_layered_x -= 0.01;
+  }
+
+
+  if (mode_layered_z_) {
+    c_layered_z += 0.01;
+  } else {
+    c_layered_z -= 0.01;
+  }
+
+  if (c_flat > 1) c_flat = 1;
+  if (c_flat< 0) c_flat = 0;
+
+  if (c_layered_x > 1) c_layered_x = 1;
+  if (c_layered_x < 0) c_layered_x = 0;
+
+  if (c_layered_z > 1) c_layered_z = 1;
+  if (c_layered_z < 0) c_layered_z = 0;
 
   // Rotation & zoom speed
 
@@ -553,7 +625,10 @@ void TrigramWidget::paintGL() {
   program.setUniformValue("tx", 0);
   program.setUniformValue("c_cyl", c_cyl);
   program.setUniformValue("c_sph", c_sph);
-  program.setUniformValue("c_pos", c_pos);
+
+  program.setUniformValue("c_flat", c_flat);
+  program.setUniformValue("c_layered_x", c_layered_x);
+  program.setUniformValue("c_layered_z", c_layered_z);
   program.setUniformValue("c_brightness", c_brightness);
 
   // Calculate model view transformation
@@ -564,17 +639,18 @@ void TrigramWidget::paintGL() {
   matrix.scale(zoomLevel);
 
   // projection matrices.
-  program.setUniformValue("xfrm", perspective * matrix);
+  program.setUniformValue("matrix", matrix);
 
-  glUniform1ui(loc_sz, size);
+  program.setUniformValue("perspective", perspective);
 
   // testomg
-  float sz = std::max(width, height);
-  sz = std::max(0.75, sz / 1000 * qPow(zoomLevel, 0.2));
-  glPointSize(sz);
+  float sz = std::min(width, height) / 256.0;
+  // qDebug() << sz;
+  program.setUniformValue("voxsz", sz);
 
+  glEnable(GL_PROGRAM_POINT_SIZE);
 
-  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+  glUniform1ui(loc_sz, size);
 
   glDrawArrays(GL_POINTS, 0, size - 2);
 }
