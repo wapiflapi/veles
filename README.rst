@@ -3,6 +3,20 @@ veles - A new age tool for binary analysis
 
 See our home page at https://codisec.com/.
 
+See binglide's `readme for an other explanation of the n-gram
+principle in visual reverse engineering.
+<https://github.com/wapiflapi/binglide
+
+Usage
+=====
+
+To move around the view:
+
+- Mouse click/drag to rotate. +Shift to keep turning.
+- WASDQE or Arrow keys & Page-Up/Down (shift+up/down == page-up/down)
+
+To change the projections use the buttons. They are also mapped in the
+same position to the 123456 keys on the keypad.
 
 Building, installing
 --------------------

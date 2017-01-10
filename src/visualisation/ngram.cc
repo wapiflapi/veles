@@ -266,6 +266,9 @@ void NGramWidget::setFlat(bool val) {
   mode_flat_ = val;
 }
 
+// We have a little fun easter egg for impressive demos here.
+// Allow useless combinations that give nice graphics using shift.
+
 void NGramWidget::setLayeredX(bool val) {
   if (!QGuiApplication::keyboardModifiers() &&
       val && mode_layered_z_pushbutton_->isChecked()) {
@@ -646,8 +649,7 @@ void NGramWidget::mouseReleaseEvent(QMouseEvent *event)
       angularSpeed += acc;
     }
 
-
-     if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
+    if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
       playPause();
     }
 

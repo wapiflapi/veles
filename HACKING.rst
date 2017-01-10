@@ -1,35 +1,17 @@
 
+Some things I wish I knew before I started hacking on this project.
+-------------------------------------------------------------------
 
-At least in digram mode, colors are used to indicate which is new or
-old in a data block. things at the front are yellow, theyll be the
-first to disapear. blue stuff is new.
+This might also be useful to new users (since there is no
+documentation yet).
 
+The colors used in the visualisation indicate where that particular
+data point originates from in the original file/data. Things from the
+begining of the selection tend to be yellow and those from the end
+blue.
 
-
-├── resources			# Just icons and basic app ressources.
-├── include			# See src.
-├── src
-│   ├── data			# copyBits, toString, repack stuff.
-│   ├── db			# a DB I guess, auto extract w/ /parser/
-│   ├── dbif			# DB interface.
-│   ├── parser			# parse PNG, pyc.
-│   ├── ui
-│   ├── util
-│   │   ├── encoders
-│   │   ├── sampling
-│   │   └── settings
-│   └── visualisation		# All algos live here.
-│       └── shaders		# And shaders are here.
-│           ├── digram
-│           ├── minimap
-│           └── trigram
-└── test			# Simply unit tests, etc look later.
-
-
-# something to note:
-
- - for the old digrams view a histogram was built in C++ (digram.cc / initTextures())
- - but not for trigrams, for those we juste paint all the dots in the
-   shader and count on cumulative transparency to create a histogram
-   effect. This also makes the projection easier.
-   After unification everything uses this method.
+Don't bother looking for the histogram generation algorithms. There
+used to be one in C++ when the digram view was seperated but that is
+no more. The histograms aren't computed, we rely on the graphics for
+that. It's cleaner, nicer, and less work. We just draw all the points,
+if there happen to be a lot it will be more visible.
