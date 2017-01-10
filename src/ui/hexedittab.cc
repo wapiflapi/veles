@@ -277,7 +277,6 @@ void HexEditTab::showVisualisation() {
   panel->setWindowTitle(curFilePath);
   panel->setAttribute(Qt::WA_DeleteOnClose);
 
-  qDebug() << "showing.";
   mainWindow->addTab(panel, dataModel->path().join(" : ") + " - Visualisation");
 }
 

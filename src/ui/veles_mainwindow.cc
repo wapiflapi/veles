@@ -31,6 +31,7 @@
 #include "dbif/types.h"
 #include "dbif/universe.h"
 #include "util/version.h"
+#include "util/settings/hexedit.h"
 #include "ui/databaseinfo.h"
 #include "ui/veles_mainwindow.h"
 #include "ui/hexedittab.h"
@@ -617,7 +618,9 @@ void VelesMainWindow::createHexEditTab(QString fileName,
       new FileBlobModel(fileBlob, {QFileInfo(fileName).fileName()});
   HexEditTab *hex = new HexEditTab(this, dataModel);
   addTab(hex, dataModel->path().join(" : ") + " - Hex");
-  QTimer::singleShot(0, hex, SLOT(showVisualisation()));
+  if (util::settings::hexedit::autoshowVisualisation()) {
+    QTimer::singleShot(50, hex, SLOT(showVisualisation()));
+  }
 }
 
 }  // namespace ui

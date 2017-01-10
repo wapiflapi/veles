@@ -22,6 +22,17 @@ namespace util {
 namespace settings {
 namespace hexedit {
 
+bool autoshowVisualisation() {
+  QSettings settings;
+  return settings.value("hexedit.autoshowVisualisation", 0).toBool();
+}
+
+
+void setAutoshowVisualisation(bool on) {
+  QSettings settings;
+  settings.setValue("hexedit.autoshowVisualisation", on);
+}
+
 int columnsNumber() {
   QSettings settings;
   return settings.value("hexedit.columnsNumber", 16).toInt();

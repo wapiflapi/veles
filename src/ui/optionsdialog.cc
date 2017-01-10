@@ -56,10 +56,8 @@ OptionsDialog::~OptionsDialog() { delete ui; }
 
 void OptionsDialog::show() {
 
-
   // do this by hand because main window does the opposite.
   ui->tabWidget->setTabsClosable(false);
-  qDebug() << ui;
 
   ui->tableWidget->verticalHeader()->setVisible(false);
   ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -90,6 +88,13 @@ void OptionsDialog::show() {
   ui->hexColumnsAutoCheckBox->setCheckState(checkState);
   ui->hexColumnsSpinBox->setValue(util::settings::hexedit::columnsNumber());
   ui->hexColumnsSpinBox->setEnabled(checkState != Qt::Checked);
+
+  if (util::settings::hexedit::autoshowVisualisation()) {
+    ui->visualisationAutoShow->setCheckState(Qt::Checked);
+  } else {
+    ui->visualisationAutoShow->setCheckState(Qt::Unchecked);
+  }
+
   QWidget::show();
 }
 
@@ -105,6 +110,8 @@ void OptionsDialog::accept() {
   util::settings::hexedit::setResizeColumnsToWindowWidth(
       ui->hexColumnsAutoCheckBox->checkState() == Qt::Checked);
   util::settings::hexedit::setColumnsNumber(ui->hexColumnsSpinBox->value());
+  util::settings::hexedit::setAutoshowVisualisation(
+      ui->visualisationAutoShow->checkState() == Qt::Checked);
 
   emit accepted();
   QDialog::hide();

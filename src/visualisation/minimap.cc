@@ -551,8 +551,6 @@ void VisualisationMinimap::wheelEvent(QWheelEvent *event) {
 
 
   float delta = static_cast<float>(2 * pixels) / rows_;
-
-  qDebug() << position_delta  << delta;
   if (delta != 0 && position_delta / delta < 2) {
     position_delta += delta;
   }

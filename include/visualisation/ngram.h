@@ -61,9 +61,6 @@ class NGramWidget : public VisualisationWidget {
 
   void resizeGL(int w, int h) override;
 
-  void focusInEvent(QFocusEvent *) override;
-  void focusOutEvent(QFocusEvent *) override;
-
   void keyPressEvent(QKeyEvent *) override;
   void keyReleaseEvent(QKeyEvent *) override;
 
@@ -99,7 +96,7 @@ class NGramWidget : public VisualisationWidget {
   QOpenGLBuffer *databuf;
 
   QOpenGLVertexArrayObject vao;
-  float c_sph, c_cyl, c_pos, c_brightness;
+  float c_sph, c_cyl, c_brightness;
   float c_flat, c_layered_x, c_layered_z;
 
   bool cam_targeting;

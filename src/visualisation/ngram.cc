@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 CodiLime
+ * Copyright 2016 CodiLime, Copyright 2017 Wannes `wapiflapi` Rombouts
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,8 @@ NGramWidget::NGramWidget(QWidget *parent) :
   mode_flat_(false), mode_layered_x_(false), mode_layered_z_(false),
   shape_(EVisualisationShape::CUBE),
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
-
   rotationAxis(QVector3D(-1, 1, 0).normalized()), angularSpeed(0.3),
-
   position(0, 0, -5), movement(0, 0, 0), speed(0, 0, 0),
-
   brightness_slider_(nullptr), is_playing_(true),
   use_brightness_heuristic_(true) {
 
@@ -270,7 +267,6 @@ void NGramWidget::setFlat(bool val) {
 }
 
 void NGramWidget::setLayeredX(bool val) {
-  qDebug() << QGuiApplication::keyboardModifiers();
   if (!QGuiApplication::keyboardModifiers() &&
       val && mode_layered_z_pushbutton_->isChecked()) {
     mode_layered_z_pushbutton_->setChecked(false);
@@ -332,11 +328,6 @@ void NGramWidget::timerEvent(QTimerEvent *e) {
     c_sph -= 0.01;
   }
 
-  if (c_cyl > 1) c_cyl = 1;
-  if (c_cyl < 0) c_cyl = 0;
-  if (c_sph > 1) c_sph = 1;
-  if (c_sph < 0) c_sph = 0;
-
   if (mode_flat_) {
     c_flat += 0.01;
   } else {
@@ -349,12 +340,16 @@ void NGramWidget::timerEvent(QTimerEvent *e) {
     c_layered_x -= 0.01;
   }
 
-
   if (mode_layered_z_) {
     c_layered_z += 0.01;
   } else {
     c_layered_z -= 0.01;
   }
+
+  if (c_cyl > 1) c_cyl = 1;
+  if (c_cyl < 0) c_cyl = 0;
+  if (c_sph > 1) c_sph = 1;
+  if (c_sph < 0) c_sph = 0;
 
   if (c_flat > 1) c_flat = 1;
   if (c_flat< 0) c_flat = 0;
@@ -365,7 +360,8 @@ void NGramWidget::timerEvent(QTimerEvent *e) {
   if (c_layered_z > 1) c_layered_z = 1;
   if (c_layered_z < 0) c_layered_z = 0;
 
-  // Rotation & zoom speed
+
+  // Rotation
 
   if (!is_playing_) {
     // Decrease angular speed (friction)
@@ -373,35 +369,30 @@ void NGramWidget::timerEvent(QTimerEvent *e) {
   }
 
   if (angularSpeed < 0.01) {
-    // Stop rotation when speed goes below threshold
-    angularSpeed = 0.0;
+    angularSpeed = 0.0; // Stop rotation when speed goes below threshold
   } else {
-    // Update rotation
     rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
   }
 
+  if (cam_target_rot) {
+    // Target the camera rotation.
+    QQuaternion target_rot = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
 
-  QQuaternion target_rot = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
-  if (cam_target_rot && rotation != target_rot) {
-    rotation = 0.9 * rotation + 0.1 * target_rot;
+    if (rotation != target_rot) {
+      rotation = 0.9 * rotation + 0.1 * target_rot;
+    }
+    if ((target_rot - rotation).length() < 0.01) {
+      cam_target_rot = false;
+      rotation = target_rot;
+    }
   }
 
   // movement speed
-  // qDebug() << speed << movement;
 
   float max_speed = 5.0;
   if (speed.length() < max_speed) {
     float cameramod = qLn(qSqrt(1 + position.length()));
     speed += cameramod * movement + 0.2 * speed.length() * movement;
-  }
-
-
-  QVector3D target_delta = cam_target - position;
-
-  if (cam_targeting && speed.length() < max_speed) {
-    QVector3D mov = (cam_target - position).normalized();
-    speed = qPow(1.0 + target_delta.length(), 2.0) * mov;
-    qDebug() << "camera targeting" << cam_targeting << position << cam_target << speed;
   }
 
   if (speed.x() > -0.001 && 0.001 > speed.x()) {
@@ -416,27 +407,26 @@ void NGramWidget::timerEvent(QTimerEvent *e) {
     speed.setZ(0);
   }
 
+
+  // If targeting the camera overwrite the speed.
+  QVector3D target_delta = cam_target - position;
+  if (cam_targeting) {
+    QVector3D mov = (cam_target - position).normalized();
+    speed = qPow(1.0 + target_delta.length(), 2.0) * mov;
+  }
+
   position += speed * 0.01;
   speed *= 0.90;
 
 
-  if (cam_targeting &&
-      (cam_target == position ||
-       (cam_target - position).normalized() != target_delta.normalized())) {
-    position = cam_target;
-    speed *= 0;
-  }
+  if (cam_targeting) {
 
-  if (cam_targeting && (cam_target - position).length() < 0.01 &&
-      (!cam_target_rot || (target_rot - rotation).length() < 0.01)) {
-    qDebug() << "camera targeted, delta" << (position - cam_target).length();
-    qDebug() << cam_target_rot << rotation << angularSpeed;
-
-    cam_targeting = false;
-    position = cam_target;
-
-    if (cam_target_rot) {
-      rotation = target_rot;
+    // If we arrived, OR we went too far (overshoot), fix position and stop.
+    if ((cam_target - position).normalized() != target_delta.normalized() ||
+	cam_target == position) {
+      cam_targeting = false;
+      position = cam_target;
+      speed *= 0;
     }
   }
 
@@ -521,16 +511,6 @@ void NGramWidget::resizeGL(int w, int h)
 
 }
 
-void NGramWidget::focusInEvent(QFocusEvent *event)
-{
-  qDebug() << "focus in" << event;
-}
-
-void NGramWidget::focusOutEvent(QFocusEvent *event)
-{
-  qDebug() << "focus out" << event;
-}
-
 void NGramWidget::keyPressEvent(QKeyEvent *event)
 {
 
@@ -594,8 +574,6 @@ void NGramWidget::keyReleaseEvent(QKeyEvent *event)
 }
 
 void NGramWidget::centerView() {
-
-  qDebug() << "centering view";
   cam_targeting = true;
 
   // We want flat projection by default in two cases.

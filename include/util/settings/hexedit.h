@@ -27,6 +27,9 @@ void setColumnsNumber(int number);
 bool resizeColumnsToWindowWidth();
 void setResizeColumnsToWindowWidth(bool on);
 
+bool autoshowVisualisation();
+void setAutoshowVisualisation(bool);
+
 }  // namespace hexedit
 }  // namespace settings
 }  // namespace util

@@ -100,11 +100,25 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="visualization">
+     <widget class="QWidget" name="visualisation">
       <attribute name="title">
-       <string>Visualization</string>
+       <string>Visualisation</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_8">
+       <item>
+        <widget class="QCheckBox" name="visualisationAutoShow">
+         <property name="text">
+          <string>Start visualisation by default</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QLabel" name="label">
          <property name="text">
@@ -114,11 +128,11 @@
        </item>
        <item>
         <widget class="QTableWidget" name="tableWidget">
-         <property name="selectionBehavior">
-          <enum>QAbstractItemView::SelectRows</enum>
-         </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::SingleSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
          </property>
          <property name="showGrid">
           <bool>true</bool>
