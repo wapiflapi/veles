@@ -617,6 +617,7 @@ void VelesMainWindow::createHexEditTab(QString fileName,
       new FileBlobModel(fileBlob, {QFileInfo(fileName).fileName()});
   HexEditTab *hex = new HexEditTab(this, dataModel);
   addTab(hex, dataModel->path().join(" : ") + " - Hex");
+  QTimer::singleShot(0, hex, SLOT(showVisualisation()));
 }
 
 }  // namespace ui

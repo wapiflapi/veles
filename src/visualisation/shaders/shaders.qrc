@@ -6,9 +6,7 @@
 		<file>minimap/lines_fshader.glsl</file>
 		<file>minimap/background_vshader.glsl</file>
 		<file>minimap/background_fshader.glsl</file>
-		<file>digram/vshader.glsl</file>
-		<file>digram/fshader.glsl</file>
-		<file>trigram/vshader.glsl</file>
-		<file>trigram/fshader.glsl</file>
+		<file>ngram/vshader.glsl</file>
+		<file>ngram/fshader.glsl</file>
 	</qresource>
 </RCC>

@@ -19,8 +19,7 @@
 #include <QTranslator>
 
 #include "ui/veles_mainwindow.h"
-#include "visualisation/digram.h"
-#include "visualisation/trigram.h"
+#include "visualisation/ngram.h"
 #include "util/settings/theme.h"
 #include "util/settings/shortcutmanager.h"
 

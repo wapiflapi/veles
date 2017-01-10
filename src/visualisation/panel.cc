@@ -23,8 +23,7 @@
 #include "visualisation/panel.h"
 #include "util/sampling/fake_sampler.h"
 #include "util/sampling/uniform_sampler.h"
-#include "visualisation/digram.h"
-#include "visualisation/trigram.h"
+#include "visualisation/ngram.h"
 
 namespace veles {
 namespace visualisation {
@@ -108,10 +107,8 @@ util::ISampler* VisualisationPanel::getSampler(ESampler type,
 VisualisationWidget* VisualisationPanel::getVisualisation(EVisualisation type,
                                                           QWidget* parent) {
   switch (type) {
-  case EVisualisation::DIGRAM:
-    return new DigramWidget(parent);
-  case EVisualisation::EVERYTHING:
-    return new TrigramWidget(parent);
+  case EVisualisation::NGRAM:
+    return new NGramWidget(parent);
   }
   return nullptr;
 }
@@ -150,12 +147,9 @@ void VisualisationPanel::setSampleSize(int kilobytes) {
   }
 }
 
-void VisualisationPanel::showDigramVisualisation() {
-  setVisualisation(EVisualisation::DIGRAM);
-}
 
-void VisualisationPanel::showTrigramVisualisation() {
-  setVisualisation(EVisualisation::EVERYTHING);
+void VisualisationPanel::showNGramVisualisation() {
+  setVisualisation(EVisualisation::NGRAM);
 }
 
 void VisualisationPanel::minimapSelectionChanged(size_t start, size_t end) {
@@ -223,23 +217,6 @@ QBoxLayout* VisualisationPanel::prepareVisualisationOptions() {
 
 void VisualisationPanel::initOptionsPanel() {
   options_layout_ = new QVBoxLayout;
-
-  digram_action_ =
-      new QAction(QIcon(":/images/nginx2d_32.png"), tr("&Digram"), this);
-  digram_action_->setToolTip("Digram Visualisation");
-  connect(digram_action_, SIGNAL(triggered()), this,
-          SLOT(showDigramVisualisation()));
-
-  trigram_action_ =
-      new QAction(QIcon(":/images/nginx3d_32.png"), tr("&Trigram"), this);
-  trigram_action_->setToolTip("Trigram Visualisation");
-  connect(trigram_action_, SIGNAL(triggered()), this,
-          SLOT(showTrigramVisualisation()));
-
-  visualisation_toolbar_ = new QToolBar("Visualisation Type");
-  visualisation_toolbar_->addAction(digram_action_);
-  visualisation_toolbar_->addAction(trigram_action_);
-  options_layout_->addWidget(visualisation_toolbar_);
 
   QLabel *sampling_label = new QLabel("Sampling method:");
   sampling_label->setAlignment(Qt::AlignTop);

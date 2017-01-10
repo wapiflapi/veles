@@ -17,7 +17,7 @@
 #ifndef TRIGRAM_H
 #define TRIGRAM_H
 
-#include "visualisation/trigram.h"
+#include "visualisation/ngram.h"
 
 #include <stdint.h>
 
@@ -39,14 +39,14 @@
 namespace veles {
 namespace visualisation {
 
-class TrigramWidget : public VisualisationWidget {
+class NGramWidget : public VisualisationWidget {
   Q_OBJECT
 
  public:
   enum class EVisualisationShape {CUBE, CYLINDER, SPHERE};
 
-  explicit TrigramWidget(QWidget *parent = 0);
-  ~TrigramWidget();
+  explicit NGramWidget(QWidget *parent = 0);
+  ~NGramWidget();
 
   bool prepareOptionsPanel(QBoxLayout *layout) override;
 

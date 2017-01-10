@@ -82,15 +82,13 @@ qt5_add_resources(VISUALISATION_SHADERS ${SRC_DIR}/visualisation/shaders/shaders
 add_library(veles_visualisation
     ${INCLUDE_DIR}/visualisation/panel.h
     ${INCLUDE_DIR}/visualisation/base.h
-    ${INCLUDE_DIR}/visualisation/digram.h
-    ${INCLUDE_DIR}/visualisation/trigram.h
+    ${INCLUDE_DIR}/visualisation/ngram.h
     ${INCLUDE_DIR}/visualisation/minimap.h
     ${INCLUDE_DIR}/visualisation/minimap_panel.h
     ${INCLUDE_DIR}/visualisation/selectrangedialog.h
     ${SRC_DIR}/visualisation/panel.cc
     ${SRC_DIR}/visualisation/base.cc
-    ${SRC_DIR}/visualisation/digram.cc
-    ${SRC_DIR}/visualisation/trigram.cc
+    ${SRC_DIR}/visualisation/ngram.cc
     ${SRC_DIR}/visualisation/minimap.cc
     ${SRC_DIR}/visualisation/minimap_panel.cc
     ${SRC_DIR}/visualisation/selectrangedialog.cc
@@ -219,13 +217,12 @@ add_executable(main_ui
   set (GENERATED_MOC_FILES
     ${CMAKE_SOURCE_DIR}/moc_base.cpp
     ${CMAKE_SOURCE_DIR}/moc_commands.cpp
-    ${CMAKE_SOURCE_DIR}/moc_digram.cpp
     ${CMAKE_SOURCE_DIR}/moc_veles_mainwindow.cpp
     ${CMAKE_SOURCE_DIR}/moc_hexedittab.cpp
     ${CMAKE_SOURCE_DIR}/moc_optionsdialog.cpp
     ${CMAKE_SOURCE_DIR}/moc_hexedit.cpp
     ${CMAKE_SOURCE_DIR}/moc_searchdialog.cpp
-    ${CMAKE_SOURCE_DIR}/moc_trigram.cpp)
+    ${CMAKE_SOURCE_DIR}/moc_ngram.cpp)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${GENERATED_MOC_FILES})
 

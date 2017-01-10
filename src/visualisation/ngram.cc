@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-#include "visualisation/trigram.h"
+#include "visualisation/ngram.h"
 #include "util/settings/shortcutmanager.h"
 
 #include <stdio.h>
@@ -51,7 +51,7 @@ const int k_brightness_heuristic_max = 66;
 // decrease this to reduce noise (but you may lose data if you overdo it)
 const double k_brightness_heuristic_scaling = 2.0;
 
-TrigramWidget::TrigramWidget(QWidget *parent) :
+NGramWidget::NGramWidget(QWidget *parent) :
   VisualisationWidget(parent),
   c_sph(0), c_cyl(0),
   c_flat(0), c_layered_x(0), c_layered_z(0),
@@ -73,21 +73,21 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
 
 
 
-TrigramWidget::~TrigramWidget() {
+NGramWidget::~NGramWidget() {
   makeCurrent();
   delete texture;
   delete databuf;
   doneCurrent();
 }
 
-void TrigramWidget::setBrightness(const int value) {
+void NGramWidget::setBrightness(const int value) {
   brightness_ = value;
   c_brightness = static_cast<float>(value) * value * value;
   c_brightness /= getDataSize();
   c_brightness = std::min(1.2f, c_brightness);
 }
 
-void TrigramWidget::refresh() {
+void NGramWidget::refresh() {
   if (use_brightness_heuristic_) {
     autoSetBrightness();
   }
@@ -99,7 +99,7 @@ void TrigramWidget::refresh() {
   doneCurrent();
 }
 
-bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
+bool NGramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   VisualisationWidget::prepareOptionsPanel(layout);
 
   QLabel *brightness_label = new QLabel("Brightness: ");
@@ -112,21 +112,21 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   brightness_slider_->setMaximum(k_maximum_brightness);
   brightness_slider_->setValue(brightness_);
   connect(brightness_slider_, &QSlider::valueChanged, this,
-          &TrigramWidget::brightnessSliderMoved);
+          &NGramWidget::brightnessSliderMoved);
   layout->addWidget(brightness_slider_);
 
   use_heuristic_checkbox_ = new QCheckBox(
     "Automatically adjust brightness");
   use_heuristic_checkbox_->setChecked(use_brightness_heuristic_);
   connect(use_heuristic_checkbox_, &QCheckBox::stateChanged,
-          this, &TrigramWidget::setUseBrightnessHeuristic);
+          this, &NGramWidget::setUseBrightnessHeuristic);
   layout->addWidget(use_heuristic_checkbox_);
 
   pause_button_ = new QPushButton();
   pause_button_->setIcon(getColoredIcon(":/images/pause.png"));
   layout->addWidget(pause_button_);
   connect(pause_button_, &QPushButton::released,
-	  this, &TrigramWidget::playPause);
+	  this, &NGramWidget::playPause);
   veles::util::settings::shortcutManager
     ->managedShortcut("playpause", "toggle animation", "Space",
 		      pause_button_, &QPushButton::click);
@@ -139,7 +139,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   mode_flat_pushbutton_->setIcon(getColoredIcon(":/images/flat.png", false));
   mode_flat_pushbutton_->setIconSize(QSize(32, 32));
   connect(mode_flat_pushbutton_, &QPushButton::toggled,
-	  this, &TrigramWidget::setFlat);
+	  this, &NGramWidget::setFlat);
   veles::util::settings::shortcutManager
     ->managedShortcut("flatmode", "toggle flat mode", "4",
 		      mode_flat_pushbutton_, &QPushButton::click);
@@ -149,7 +149,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   mode_layered_x_pushbutton_->setIcon(getColoredIcon(":/images/sorted.png"));
   mode_layered_x_pushbutton_->setIconSize(QSize(32, 32));
   connect(mode_layered_x_pushbutton_, &QPushButton::toggled,
-	  this, &TrigramWidget::setLayeredX);
+	  this, &NGramWidget::setLayeredX);
   veles::util::settings::shortcutManager
     ->managedShortcut("sorted", "toggle sorted mode", "5",
 		      mode_layered_x_pushbutton_, &QPushButton::click);
@@ -159,7 +159,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   mode_layered_z_pushbutton_->setIcon(getColoredIcon(":/images/layered.png"));
   mode_layered_z_pushbutton_->setIconSize(QSize(32, 32));
   connect(mode_layered_z_pushbutton_, &QPushButton::toggled,
-	  this, &TrigramWidget::setLayeredZ);
+	  this, &NGramWidget::setLayeredZ);
   veles::util::settings::shortcutManager
     ->managedShortcut("layeredmode", "toggle layered mode", "6",
 		      mode_layered_z_pushbutton_, &QPushButton::click);
@@ -179,7 +179,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   cube_button_->setIcon(getColoredIcon(":/images/cube.png", false));
   cube_button_->setIconSize(QSize(32, 32));
   connect(cube_button_, &QPushButton::released,
-          std::bind(&TrigramWidget::setShape, this,
+          std::bind(&NGramWidget::setShape, this,
                     EVisualisationShape::CUBE));
   veles::util::settings::shortcutManager
     ->managedShortcut("cubeshape", "switch to cube shape", "1",
@@ -190,7 +190,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   cylinder_button_->setIcon(getColoredIcon(":/images/cylinder.png", false));
   cylinder_button_->setIconSize(QSize(32, 32));
   connect(cylinder_button_, &QPushButton::released,
-          std::bind(&TrigramWidget::setShape, this,
+          std::bind(&NGramWidget::setShape, this,
                     EVisualisationShape::CYLINDER));
   veles::util::settings::shortcutManager
     ->managedShortcut("cylindershape", "switch to cylinder shape", "2",
@@ -201,7 +201,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   sphere_button_->setIcon(getColoredIcon(":/images/sphere.png"));
   sphere_button_->setIconSize(QSize(32, 32));
   connect(sphere_button_, &QPushButton::released,
-          std::bind(&TrigramWidget::setShape, this,
+          std::bind(&NGramWidget::setShape, this,
                     EVisualisationShape::SPHERE));
   veles::util::settings::shortcutManager
     ->managedShortcut("sphereshape", "switch to sphere shape", "3",
@@ -220,7 +220,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
 
   center_button_ = new QPushButton("center view");
   layout->addWidget(center_button_);
-  connect(center_button_, &QPushButton::released, this, &TrigramWidget::centerView);
+  connect(center_button_, &QPushButton::released, this, &NGramWidget::centerView);
   veles::util::settings::shortcutManager
     ->managedShortcut("centerview", "center view", "0",
 		      center_button_, &QPushButton::click);
@@ -229,7 +229,7 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   return true;
 }
 
-int TrigramWidget::suggestBrightness() {
+int NGramWidget::suggestBrightness() {
   int size = getDataSize();
   auto data = reinterpret_cast<const uint8_t*>(getData());
   if (size < 100) {
@@ -251,7 +251,7 @@ int TrigramWidget::suggestBrightness() {
                   k_brightness_heuristic_max - offset);
 }
 
-void TrigramWidget::playPause() {
+void NGramWidget::playPause() {
   QPixmap pixmap;
   if (is_playing_) {
     pause_button_->setIcon(getColoredIcon(":/images/play.png"));
@@ -264,12 +264,12 @@ void TrigramWidget::playPause() {
   }
 }
 
-void TrigramWidget::setFlat(bool val) {
+void NGramWidget::setFlat(bool val) {
   mode_layered_z_pushbutton_->setEnabled(!val);
   mode_flat_ = val;
 }
 
-void TrigramWidget::setLayeredX(bool val) {
+void NGramWidget::setLayeredX(bool val) {
   qDebug() << QGuiApplication::keyboardModifiers();
   if (!QGuiApplication::keyboardModifiers() &&
       val && mode_layered_z_pushbutton_->isChecked()) {
@@ -278,7 +278,7 @@ void TrigramWidget::setLayeredX(bool val) {
   mode_layered_x_ = val;
 }
 
-void TrigramWidget::setLayeredZ(bool val) {
+void NGramWidget::setLayeredZ(bool val) {
   if (!QGuiApplication::keyboardModifiers() &&
       val && mode_layered_x_pushbutton_->isChecked()) {
     mode_layered_x_pushbutton_->setChecked(false);
@@ -287,25 +287,25 @@ void TrigramWidget::setLayeredZ(bool val) {
 }
 
 
-void TrigramWidget::setShape(EVisualisationShape shape) {
+void NGramWidget::setShape(EVisualisationShape shape) {
   shape_ = shape;
 }
 
-void TrigramWidget::brightnessSliderMoved(int value) {
+void NGramWidget::brightnessSliderMoved(int value) {
   if (value == brightness_) return;
   use_brightness_heuristic_ = false;
   use_heuristic_checkbox_->setChecked(false);
   setBrightness(value);
 }
 
-void TrigramWidget::setUseBrightnessHeuristic(int state) {
+void NGramWidget::setUseBrightnessHeuristic(int state) {
   use_brightness_heuristic_ = state;
   if (use_brightness_heuristic_) {
     autoSetBrightness();
   }
 }
 
-void TrigramWidget::autoSetBrightness() {
+void NGramWidget::autoSetBrightness() {
   auto new_brightness = suggestBrightness();
   if (new_brightness == brightness_) return;
   brightness_ = new_brightness;
@@ -315,7 +315,7 @@ void TrigramWidget::autoSetBrightness() {
   setBrightness(brightness_);
 }
 
-void TrigramWidget::timerEvent(QTimerEvent *e) {
+void NGramWidget::timerEvent(QTimerEvent *e) {
 
   // neat trick here to transform towards projections,
   // always move towards it, fix later if we went to far.
@@ -445,7 +445,7 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
   update();
 }
 
-void TrigramWidget::initializeVisualisationGL() {
+void NGramWidget::initializeVisualisationGL() {
   initializeOpenGLFunctions();
 
   setMouseTracking(true);
@@ -461,14 +461,14 @@ void TrigramWidget::initializeVisualisationGL() {
   setBrightness(brightness_);
 }
 
-void TrigramWidget::initShaders() {
+void NGramWidget::initShaders() {
   if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex,
-                                       ":/trigram/vshader.glsl"))
+                                       ":/ngram/vshader.glsl"))
     close();
 
   // Compile fragment shader
   if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment,
-                                       ":/trigram/fshader.glsl"))
+                                       ":/ngram/fshader.glsl"))
     close();
 
   // Link shader pipeline
@@ -477,7 +477,7 @@ void TrigramWidget::initShaders() {
   timer.start(16, this);
 }
 
-void TrigramWidget::initTextures() {
+void NGramWidget::initTextures() {
   int size = getDataSize();
   const uint8_t *data = reinterpret_cast<const uint8_t*>(getData());
 
@@ -495,12 +495,12 @@ void TrigramWidget::initTextures() {
   glTexBuffer(GL_TEXTURE_BUFFER, QOpenGLTexture::R8U, databuf->bufferId());
 }
 
-void TrigramWidget::initGeometry()
+void NGramWidget::initGeometry()
 {
   vao.create();
 }
 
-void TrigramWidget::resizeGL(int w, int h)
+void NGramWidget::resizeGL(int w, int h)
 {
   width = w;
   height = h;
@@ -521,17 +521,17 @@ void TrigramWidget::resizeGL(int w, int h)
 
 }
 
-void TrigramWidget::focusInEvent(QFocusEvent *event)
+void NGramWidget::focusInEvent(QFocusEvent *event)
 {
   qDebug() << "focus in" << event;
 }
 
-void TrigramWidget::focusOutEvent(QFocusEvent *event)
+void NGramWidget::focusOutEvent(QFocusEvent *event)
 {
   qDebug() << "focus out" << event;
 }
 
-void TrigramWidget::keyPressEvent(QKeyEvent *event)
+void NGramWidget::keyPressEvent(QKeyEvent *event)
 {
 
   if (event->key() == Qt::Key_Left || event->key() == Qt::Key_A) {
@@ -568,7 +568,7 @@ void TrigramWidget::keyPressEvent(QKeyEvent *event)
 
 }
 
-void TrigramWidget::keyReleaseEvent(QKeyEvent *event)
+void NGramWidget::keyReleaseEvent(QKeyEvent *event)
 {
 
   if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right ||
@@ -593,7 +593,7 @@ void TrigramWidget::keyReleaseEvent(QKeyEvent *event)
 
 }
 
-void TrigramWidget::centerView() {
+void NGramWidget::centerView() {
 
   qDebug() << "centering view";
   cam_targeting = true;
@@ -614,7 +614,7 @@ void TrigramWidget::centerView() {
   }
 }
 
-void TrigramWidget::mousePressEvent(QMouseEvent *event)
+void NGramWidget::mousePressEvent(QMouseEvent *event)
 {
   // Save mouse press position
   mousePressPosition = QVector2D(event->localPos());
@@ -622,7 +622,7 @@ void TrigramWidget::mousePressEvent(QMouseEvent *event)
   angularSpeed = 0;
 }
 
-void TrigramWidget::mouseMoveEvent(QMouseEvent *event)
+void NGramWidget::mouseMoveEvent(QMouseEvent *event)
 {
 
   if (!(event->buttons() & Qt::LeftButton)) {
@@ -650,7 +650,7 @@ void TrigramWidget::mouseMoveEvent(QMouseEvent *event)
 
 }
 
-void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
+void NGramWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     // Mouse release position - mouse press position
     QVector2D diff = QVector2D(event->localPos()) - mousePressPosition;
@@ -669,7 +669,7 @@ void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
     }
 
 
-    if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
+     if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
       playPause();
     }
 
@@ -680,14 +680,14 @@ void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
     }
 }
 
-void TrigramWidget::wheelEvent(QWheelEvent *event) {
+void NGramWidget::wheelEvent(QWheelEvent *event) {
 
   float movement = (event->delta() / 8) / 15;
   float zoom = 2 * movement * qAbs(movement);
   speed.setZ(speed.z() + zoom);
 }
 
-void TrigramWidget::paintGL() {
+void NGramWidget::paintGL() {
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
