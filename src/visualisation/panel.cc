@@ -114,8 +114,16 @@ VisualisationWidget* VisualisationPanel::getVisualisation(EVisualisation type,
 }
 
 QString VisualisationPanel::prepareAddressString(size_t start, size_t end) {
-  auto label = QString("0x%1 : ").arg(start, 8, 16, QChar('0'));
-  label.append(QString("0x%1").arg(end, 8, 16, QChar('0')));
+  char const *units [] = {" Bytes", " kB", " MB", " GB"};
+  unsigned int unit;
+  size_t size = end - start;
+  for (unit = 0; unit < sizeof units / sizeof units[0] && size >= 1024; ++unit) {
+    size /= 1024;
+  }
+
+  auto label = QString("%1%2<br/>").arg(size).arg(units[unit]);
+  label.append(QString("0x%1 : ").arg(start, 8, 16, QChar('0')));
+  label.append(QString("0x%1 ").arg(end, 8, 16, QChar('0')));
   return label;
 }
 
