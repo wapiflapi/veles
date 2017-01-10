@@ -1,6 +1,5 @@
 
-Some things I wish I knew before I started hacking on this project.
--------------------------------------------------------------------
+### Some things I wish I knew before I started hacking on this project.
 
 This might also be useful to new users (since there is no
 documentation yet).
