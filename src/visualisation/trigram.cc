@@ -619,10 +619,6 @@ void TrigramWidget::mousePressEvent(QMouseEvent *event)
   // Save mouse press position
   mousePressPosition = QVector2D(event->localPos());
 
-  if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
-    playPause();
-  }
-
   angularSpeed = 0;
 }
 
@@ -670,6 +666,11 @@ void TrigramWidget::mouseReleaseEvent(QMouseEvent *event)
     if (acc != 0) {
       rotationAxis = (0.25 * angularSpeed * 0.75 * rotationAxis + n * acc).normalized();
       angularSpeed += acc;
+    }
+
+
+    if (is_playing_ ^ bool(event->modifiers() & Qt::ShiftModifier)) {
+      playPause();
     }
 
     // This is satisfying.
