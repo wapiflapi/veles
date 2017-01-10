@@ -52,6 +52,7 @@ add_library(veles_base
     ${INCLUDE_DIR}/util/sampling/uniform_sampler.h
     ${INCLUDE_DIR}/util/sampling/fake_sampler.h
     ${INCLUDE_DIR}/util/settings/theme.h
+    ${INCLUDE_DIR}/util/settings/shortcutmanager.h
     ${INCLUDE_DIR}/util/settings/hexedit.h
     ${INCLUDE_DIR}/util/encoders/encoder.h
     ${INCLUDE_DIR}/util/encoders/factory.h
@@ -61,6 +62,7 @@ add_library(veles_base
     ${SRC_DIR}/util/sampling/uniform_sampler.cc
     ${SRC_DIR}/util/sampling/fake_sampler.cc
     ${SRC_DIR}/util/settings/theme.cc
+    ${SRC_DIR}/util/settings/shortcutmanager.cc
     ${SRC_DIR}/util/settings/hexedit.cc
     ${SRC_DIR}/util/encoders/encoder.cc
     ${SRC_DIR}/util/encoders/base64_encoder.cc

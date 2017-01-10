@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>395</width>
-    <height>246</height>
+    <width>367</width>
+    <height>259</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,77 +15,149 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="gbApp">
-     <property name="title">
-      <string>App</string>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>1</number>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="2" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QLabel" name="labelHexEditColors">
-          <property name="text">
-           <string>Colors</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="colorsBox">
-          <property name="editable">
-           <bool>false</bool>
-          </property>
-          <property name="currentIndex">
-           <number>-1</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="gbHexEdit">
-     <property name="title">
-      <string>HexEdit</string>
+     <property name="tabsClosable">
+      <bool>false</bool>
      </property>
-     <widget class="QWidget" name="horizontalLayoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>26</y>
-        <width>361</width>
-        <height>61</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <widget class="QWidget" name="appearance">
+      <attribute name="title">
+       <string>Appearance</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
-        <widget class="QLabel" name="hexColumnsLabel">
+        <widget class="QGroupBox" name="gbApp">
+         <property name="title">
+          <string>App</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="labelHexEditColors">
+              <property name="text">
+               <string>Colors</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="colorsBox">
+              <property name="editable">
+               <bool>false</bool>
+              </property>
+              <property name="currentIndex">
+               <number>-1</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gbHexEdit">
+         <property name="title">
+          <string>HexEdit</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_6">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="hexColumnsLabel">
+              <property name="text">
+               <string>Columns</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_3">
+              <item>
+               <widget class="QSpinBox" name="hexColumnsSpinBox">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="value">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="hexColumnsAutoCheckBox">
+                <property name="text">
+                 <string>Resize to window width</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="visualization">
+      <attribute name="title">
+       <string>Visualization</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_8">
+       <item>
+        <widget class="QLabel" name="label">
          <property name="text">
-          <string>Columns</string>
+          <string>Shortcuts</string>
          </property>
         </widget>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QSpinBox" name="hexColumnsSpinBox">
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="value">
-            <number>16</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="hexColumnsAutoCheckBox">
-           <property name="text">
-            <string>Resize to window width</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <widget class="QTableWidget" name="tableWidget">
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SingleSelection</enum>
+         </property>
+         <property name="showGrid">
+          <bool>true</bool>
+         </property>
+         <property name="sortingEnabled">
+          <bool>false</bool>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <attribute name="horizontalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderCascadingSectionResizes">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderHighlightSections">
+          <bool>false</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>shortcut</string>
+          </property>
+          <property name="textAlignment">
+           <set>AlignCenter</set>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>what's this</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <widget class="QKeySequenceEdit" name="keySequenceEdit"/>
        </item>
       </layout>
      </widget>
@@ -115,8 +187,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>290</x>
-     <y>160</y>
+     <x>299</x>
+     <y>249</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -131,8 +203,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>222</x>
-     <y>154</y>
+     <x>231</x>
+     <y>249</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>

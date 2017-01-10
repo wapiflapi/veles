@@ -5,6 +5,7 @@ old in a data block. things at the front are yellow, theyll be the
 first to disapear. blue stuff is new.
 
 
+
 ├── resources			# Just icons and basic app ressources.
 ├── include			# See src.
 ├── src
@@ -27,9 +28,8 @@ first to disapear. blue stuff is new.
 
 # something to note:
 
- - for digrams a histogram is built in C++ (digram.cc / initTextures())
+ - for the old digrams view a histogram was built in C++ (digram.cc / initTextures())
  - but not for trigrams, for those we juste paint all the dots in the
    shader and count on cumulative transparency to create a histogram
-   effect.
-
-   This also makes the projection harder.
+   effect. This also makes the projection easier.
+   After unification everything uses this method.

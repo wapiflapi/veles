@@ -15,6 +15,7 @@
  *
  */
 #include "visualisation/trigram.h"
+#include "util/settings/shortcutmanager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,6 +37,8 @@
 #include <QHBoxLayout>
 #include <QGuiApplication>
 #include <QButtonGroup>
+#include <QShortcut>
+#include <QTimer>
 
 namespace veles {
 namespace visualisation {
@@ -52,6 +55,7 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
   VisualisationWidget(parent),
   c_sph(0), c_cyl(0),
   c_flat(0), c_layered_x(0), c_layered_z(0),
+  cam_targeting(false),
   mode_flat_(false), mode_layered_x_(false), mode_layered_z_(false),
   shape_(EVisualisationShape::CUBE),
   brightness_((k_maximum_brightness + k_minimum_brightness) / 2),
@@ -63,9 +67,8 @@ TrigramWidget::TrigramWidget(QWidget *parent) :
   brightness_slider_(nullptr), is_playing_(true),
   use_brightness_heuristic_(true) {
 
-  // FIXME: we might not want to be the only focused thing :/
   setFocusPolicy(Qt::StrongFocus);
-
+  QTimer::singleShot(0, this, SLOT(setFocus()));
 }
 
 
@@ -108,22 +111,26 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   brightness_slider_->setMinimum(k_minimum_brightness);
   brightness_slider_->setMaximum(k_maximum_brightness);
   brightness_slider_->setValue(brightness_);
-  connect(brightness_slider_, SIGNAL(valueChanged(int)), this,
-          SLOT(brightnessSliderMoved(int)));
+  connect(brightness_slider_, &QSlider::valueChanged, this,
+          &TrigramWidget::brightnessSliderMoved);
   layout->addWidget(brightness_slider_);
 
   use_heuristic_checkbox_ = new QCheckBox(
     "Automatically adjust brightness");
   use_heuristic_checkbox_->setChecked(use_brightness_heuristic_);
-  connect(use_heuristic_checkbox_, SIGNAL(stateChanged(int)),
-          this, SLOT(setUseBrightnessHeuristic(int)));
+  connect(use_heuristic_checkbox_, &QCheckBox::stateChanged,
+          this, &TrigramWidget::setUseBrightnessHeuristic);
   layout->addWidget(use_heuristic_checkbox_);
 
   pause_button_ = new QPushButton();
   pause_button_->setIcon(getColoredIcon(":/images/pause.png"));
   layout->addWidget(pause_button_);
-  connect(pause_button_, SIGNAL(released()),
-          this, SLOT(playPause()));
+  connect(pause_button_, &QPushButton::released,
+	  this, &TrigramWidget::playPause);
+  veles::util::settings::shortcutManager
+    ->managedShortcut("playpause", "toggle animation", "Space",
+		      pause_button_, &QPushButton::click);
+
 
   QHBoxLayout *mode_buttons = new QHBoxLayout();
 
@@ -131,22 +138,31 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   mode_flat_pushbutton_->setCheckable(true);
   mode_flat_pushbutton_->setIcon(getColoredIcon(":/images/flat.png", false));
   mode_flat_pushbutton_->setIconSize(QSize(32, 32));
-  connect(mode_flat_pushbutton_, SIGNAL(toggled(bool)),
-	  this, SLOT(setFlat(bool)));
+  connect(mode_flat_pushbutton_, &QPushButton::toggled,
+	  this, &TrigramWidget::setFlat);
+  veles::util::settings::shortcutManager
+    ->managedShortcut("flatmode", "toggle flat mode", "4",
+		      mode_flat_pushbutton_, &QPushButton::click);
 
   mode_layered_x_pushbutton_ = new QPushButton();
   mode_layered_x_pushbutton_->setCheckable(true);
   mode_layered_x_pushbutton_->setIcon(getColoredIcon(":/images/sorted.png"));
   mode_layered_x_pushbutton_->setIconSize(QSize(32, 32));
-  connect(mode_layered_x_pushbutton_, SIGNAL(toggled(bool)),
-          this, SLOT(setLayeredX(bool)));
+  connect(mode_layered_x_pushbutton_, &QPushButton::toggled,
+	  this, &TrigramWidget::setLayeredX);
+  veles::util::settings::shortcutManager
+    ->managedShortcut("sorted", "toggle sorted mode", "5",
+		      mode_layered_x_pushbutton_, &QPushButton::click);
 
   mode_layered_z_pushbutton_ = new QPushButton();
   mode_layered_z_pushbutton_->setCheckable(true);
   mode_layered_z_pushbutton_->setIcon(getColoredIcon(":/images/layered.png"));
   mode_layered_z_pushbutton_->setIconSize(QSize(32, 32));
-  connect(mode_layered_z_pushbutton_, SIGNAL(toggled(bool)),
-          this, SLOT(setLayeredZ(bool)));
+  connect(mode_layered_z_pushbutton_, &QPushButton::toggled,
+	  this, &TrigramWidget::setLayeredZ);
+  veles::util::settings::shortcutManager
+    ->managedShortcut("layeredmode", "toggle layered mode", "6",
+		      mode_layered_z_pushbutton_, &QPushButton::click);
 
 
   mode_buttons->addWidget(mode_flat_pushbutton_);
@@ -165,6 +181,9 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   connect(cube_button_, &QPushButton::released,
           std::bind(&TrigramWidget::setShape, this,
                     EVisualisationShape::CUBE));
+  veles::util::settings::shortcutManager
+    ->managedShortcut("cubeshape", "switch to cube shape", "1",
+		      cube_button_, &QPushButton::click);
 
   cylinder_button_ = new QPushButton();
   cylinder_button_->setCheckable(true);
@@ -173,15 +192,20 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
   connect(cylinder_button_, &QPushButton::released,
           std::bind(&TrigramWidget::setShape, this,
                     EVisualisationShape::CYLINDER));
+  veles::util::settings::shortcutManager
+    ->managedShortcut("cylindershape", "switch to cylinder shape", "2",
+		      cylinder_button_, &QPushButton::click);
 
   sphere_button_ = new QPushButton();
   sphere_button_->setCheckable(true);
   sphere_button_->setIcon(getColoredIcon(":/images/sphere.png"));
   sphere_button_->setIconSize(QSize(32, 32));
-
   connect(sphere_button_, &QPushButton::released,
           std::bind(&TrigramWidget::setShape, this,
                     EVisualisationShape::SPHERE));
+  veles::util::settings::shortcutManager
+    ->managedShortcut("sphereshape", "switch to sphere shape", "3",
+		      sphere_button_, &QPushButton::click);
 
   shape_buttons->addWidget(cube_button_);
   shape_buttons->addWidget(cylinder_button_);
@@ -196,7 +220,11 @@ bool TrigramWidget::prepareOptionsPanel(QBoxLayout *layout) {
 
   center_button_ = new QPushButton("center view");
   layout->addWidget(center_button_);
-  connect(center_button_, SIGNAL(released()), this, SLOT(centerView()));
+  connect(center_button_, &QPushButton::released, this, &TrigramWidget::centerView);
+  veles::util::settings::shortcutManager
+    ->managedShortcut("centerview", "center view", "0",
+		      center_button_, &QPushButton::click);
+
 
   return true;
 }
@@ -231,6 +259,9 @@ void TrigramWidget::playPause() {
     pause_button_->setIcon(getColoredIcon(":/images/pause.png"));
   }
   is_playing_ = !is_playing_;
+  if (is_playing_ && angularSpeed == 0) {
+    angularSpeed = 0.3;
+  }
 }
 
 void TrigramWidget::setFlat(bool val) {
@@ -239,6 +270,7 @@ void TrigramWidget::setFlat(bool val) {
 }
 
 void TrigramWidget::setLayeredX(bool val) {
+  qDebug() << QGuiApplication::keyboardModifiers();
   if (!QGuiApplication::keyboardModifiers() &&
       val && mode_layered_z_pushbutton_->isChecked()) {
     mode_layered_z_pushbutton_->setChecked(false);
@@ -348,11 +380,28 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
     rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
   }
 
+
+  QQuaternion target_rot = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
+  if (cam_target_rot && rotation != target_rot) {
+    rotation = 0.9 * rotation + 0.1 * target_rot;
+  }
+
   // movement speed
   // qDebug() << speed << movement;
 
-  if (speed.length() < 5) {
-    speed += 0.01 * movement + 0.2 * speed.length() * movement;
+  float max_speed = 5.0;
+  if (speed.length() < max_speed) {
+    float cameramod = qLn(qSqrt(1 + position.length()));
+    speed += cameramod * movement + 0.2 * speed.length() * movement;
+  }
+
+
+  QVector3D target_delta = cam_target - position;
+
+  if (cam_targeting && speed.length() < max_speed) {
+    QVector3D mov = (cam_target - position).normalized();
+    speed = qPow(1.0 + target_delta.length(), 2.0) * mov;
+    qDebug() << "camera targeting" << cam_targeting << position << cam_target << speed;
   }
 
   if (speed.x() > -0.001 && 0.001 > speed.x()) {
@@ -369,6 +418,27 @@ void TrigramWidget::timerEvent(QTimerEvent *e) {
 
   position += speed * 0.01;
   speed *= 0.90;
+
+
+  if (cam_targeting &&
+      (cam_target == position ||
+       (cam_target - position).normalized() != target_delta.normalized())) {
+    position = cam_target;
+    speed *= 0;
+  }
+
+  if (cam_targeting && (cam_target - position).length() < 0.01 &&
+      (!cam_target_rot || (target_rot - rotation).length() < 0.01)) {
+    qDebug() << "camera targeted, delta" << (position - cam_target).length();
+    qDebug() << cam_target_rot << rotation << angularSpeed;
+
+    cam_targeting = false;
+    position = cam_target;
+
+    if (cam_target_rot) {
+      rotation = target_rot;
+    }
+  }
 
   // Request an update
   // TODO: only if something is changing.
@@ -464,49 +534,36 @@ void TrigramWidget::focusOutEvent(QFocusEvent *event)
 void TrigramWidget::keyPressEvent(QKeyEvent *event)
 {
 
-
-  if (event->key() == Qt::Key_A) {
+  if (event->key() == Qt::Key_Left || event->key() == Qt::Key_A) {
     movement.setX(1);
   }
 
-  if (event->key() == Qt::Key_D) {
+  if (event->key() == Qt::Key_Right || event->key() == Qt::Key_D) {
     movement.setX(-1);
   }
 
-  if (event->key() == Qt::Key_W) {
-    movement.setY(-1);
+  if (event->key() == Qt::Key_Down || event->key() == Qt::Key_S) {
+    if (event->modifiers() & Qt::ShiftModifier) {
+      movement.setZ(-1);
+    } else {
+      movement.setY(1);
+    }
   }
 
-  if (event->key() == Qt::Key_S) {
-    movement.setY(1);
+  if (event->key() == Qt::Key_Up || event->key() == Qt::Key_W) {
+    if (event->modifiers() & Qt::ShiftModifier) {
+      movement.setZ(1);
+    } else {
+      movement.setY(-1);
+    }
   }
 
-  if (event->key() == Qt::Key_Q) {
+  if (event->key() == Qt::Key_PageDown || event->key() == Qt::Key_Q) {
     movement.setZ(-1);
   }
 
-  if (event->key() == Qt::Key_E) {
+  if (event->key() == Qt::Key_PageUp || event->key() == Qt::Key_E) {
     movement.setZ(1);
-  }
-
-
-  if (event->key() == Qt::Key_Space) {
-    centerView();
-  }
-
-}
-
-void TrigramWidget::centerView() {
-
-  // We want flat projection by default in two cases.
-  if (mode_flat_ && shape_ != EVisualisationShape::SPHERE) {
-    rotation = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), 0);
-    position = QVector3D(0, 0, -2.414);
-    angularSpeed = 0;
-  } else {
-    rotation = QQuaternion::fromAxisAndAngle(QVector3D(-1, 1, 0).normalized(), -30);
-    position = QVector3D(0, 0, -5);
-    angularSpeed = 0;
   }
 
 }
@@ -514,36 +571,48 @@ void TrigramWidget::centerView() {
 void TrigramWidget::keyReleaseEvent(QKeyEvent *event)
 {
 
-
-  if (event->key() == Qt::Key_D && movement.x() < 0) {
+  if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right ||
+      event->key() == Qt::Key_A || event->key() == Qt::Key_D) {
     movement.setX(0);
   }
 
-  if (event->key() == Qt::Key_A && movement.x() > 0) {
-    movement.setX(0);
+  if (event->key() == Qt::Key_Down || event->key() == Qt::Key_Up ||
+      event->key() == Qt::Key_S || event->key() == Qt::Key_W) {
+    if (event->modifiers() & Qt::ShiftModifier) {
+      movement.setZ(0);
+    } else {
+      movement.setY(0);
+    }
   }
 
-
-  if (event->key() == Qt::Key_W && movement.y() < 0) {
-    movement.setY(0);
-  }
-
-  if (event->key() == Qt::Key_S && movement.y() > 0) {
-    movement.setY(0);
-  }
-
-
-  if (event->key() == Qt::Key_Q && movement.z() < 0) {
-    movement.setZ(0);
-  }
-
-  if (event->key() == Qt::Key_E && movement.z() > 0) {
+  if (event->key() == Qt::Key_PageDown || event->key() == Qt::Key_PageUp ||
+      event->key() == Qt::Key_Q || event->key() == Qt::Key_E) {
     movement.setZ(0);
   }
 
 
 }
 
+void TrigramWidget::centerView() {
+
+  qDebug() << "centering view";
+  cam_targeting = true;
+
+  // We want flat projection by default in two cases.
+  if (mode_flat_ && shape_ != EVisualisationShape::SPHERE) {
+    if (is_playing_) {
+      playPause();
+    }
+    cam_target = QVector3D(0, 0, -2.414);
+    cam_target_rot = true;
+  } else {
+    if (!is_playing_) {
+      playPause();
+    }
+    cam_target = QVector3D(0, 0, -5);
+    cam_target_rot = false;
+  }
+}
 
 void TrigramWidget::mousePressEvent(QMouseEvent *event)
 {

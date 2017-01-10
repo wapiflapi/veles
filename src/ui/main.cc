@@ -22,6 +22,7 @@
 #include "visualisation/digram.h"
 #include "visualisation/trigram.h"
 #include "util/settings/theme.h"
+#include "util/settings/shortcutmanager.h"
 
 int main(int argc, char *argv[]) {
   Q_INIT_RESOURCE(veles);

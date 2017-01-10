@@ -19,6 +19,9 @@
 #include "ui_optionsdialog.h"
 #include "util/settings/hexedit.h"
 #include "util/settings/theme.h"
+#include "util/settings/shortcutmanager.h"
+
+#include <QDebug>
 
 namespace veles {
 namespace ui {
@@ -32,11 +35,53 @@ OptionsDialog::OptionsDialog(QWidget *parent)
           [this](int state) {
             ui->hexColumnsSpinBox->setEnabled(state != Qt::Checked);
           });
+
+  connect(ui->keySequenceEdit, &QKeySequenceEdit::keySequenceChanged,
+	  [this](const QKeySequence &keysequence){
+
+	    // FIXME: settings.setValue() but we dont have it.
+	    int index = ui->tableWidget->currentRow();
+	    if (keysequence.isEmpty()) return;
+
+	    veles::util::settings::shortcutManager
+	      ->shortcutList.at(index)->setKey(keysequence);
+	    ui->tableWidget->item(index, 0)
+	      ->setText(keysequence.toString());
+	    ui->keySequenceEdit->clear();
+
+	  });
 }
 
 OptionsDialog::~OptionsDialog() { delete ui; }
 
 void OptionsDialog::show() {
+
+
+  // do this by hand because main window does the opposite.
+  ui->tabWidget->setTabsClosable(false);
+  qDebug() << ui;
+
+  ui->tableWidget->verticalHeader()->setVisible(false);
+  ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+
+  int nbshortcuts = veles::util::settings::shortcutManager->shortcutList.size();
+
+  ui->tableWidget->setRowCount(nbshortcuts);
+  ui->tableWidget->setSortingEnabled(false);
+
+  // FIXME: getting those from the manager doesn't really work.
+  // it only works if the visualisation is running already.
+  // we should really generate a list of available shortcuts AT COMPILE TIME.
+  for (int i = 0; i < nbshortcuts; ++i) {
+    QShortcut *shortcut = veles::util::settings::shortcutManager->shortcutList.at(i);
+    QTableWidgetItem *item = new QTableWidgetItem(shortcut->key().toString());
+    item->setTextAlignment(Qt::AlignCenter);
+    ui->tableWidget->setItem(i, 0, item);
+    item = new QTableWidgetItem(shortcut->whatsThis());
+    ui->tableWidget->setItem(i, 1, item);
+  }
+
   ui->colorsBox->setCurrentText(util::settings::theme::currentId());
   Qt::CheckState checkState = Qt::Unchecked;
   if (util::settings::hexedit::resizeColumnsToWindowWidth()) {

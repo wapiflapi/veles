@@ -102,6 +102,10 @@ class TrigramWidget : public VisualisationWidget {
   float c_sph, c_cyl, c_pos, c_brightness;
   float c_flat, c_layered_x, c_layered_z;
 
+  bool cam_targeting;
+  QVector3D cam_target;
+  bool cam_target_rot;
+
   bool mode_flat_, mode_layered_x_, mode_layered_z_;
 
   QPushButton *mode_flat_pushbutton_;
