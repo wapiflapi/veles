@@ -1,11 +1,13 @@
+
 veles - A new age tool for binary analysis
 ==========================================
 
 See our home page at https://codisec.com/.
 
-See binglide's `readme for an other explanation of the n-gram
-principle in visual reverse engineering.
-<https://github.com/wapiflapi/binglide
+See https://github.com/wapiflapi/binglide for an other explanation of
+the n-gram principle in visual reverse engineering.
+
+.. image:: http://i.imgur.com/cdiVlCD.png
 
 Usage
 =====
